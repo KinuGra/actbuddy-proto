@@ -1,0 +1,25 @@
+# Git
+.git
+.gitignore
+
+# Node
+node_modules
+.next
+
+# Go build
+tmp
+bin
+
+# Logs
+*.log
+
+# Env
+.env
+.env.*
+
+# OS
+.DS_Store
+
+# Docker
+docker-compose.yml
+docker-compose.*.yml
