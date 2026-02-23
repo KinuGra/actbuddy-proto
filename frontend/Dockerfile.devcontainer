@@ -1,0 +1,8 @@
+FROM mcr.microsoft.com/devcontainers/javascript-node:22-bookworm
+
+RUN corepack enable && corepack prepare pnpm@9 --activate
+
+WORKDIR /repo/frontend
+COPY . /repo
+
+CMD ["pnpm", "run", "dev"]

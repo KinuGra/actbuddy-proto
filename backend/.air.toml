@@ -2,7 +2,17 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-cmd = "go build -o ./tmp/app ."
+pre_cmd = ["go mod tidy"]
+cmd = "go build -buildvcs=false -o ./tmp/app ."
 bin = "tmp/app"
 include_ext = ["go"]
+include_dir = ["."]
 exclude_dir = ["tmp", "vendor"]
+exclude_unchanged = false
+# ボリュームマウント（Docker/WSL2）でファイル変更を検知するためポーリングを使用
+poll = true
+poll_interval = 500
+delay = 0
+# 古いプロセスを確実に終了させてから新規起動
+send_interrupt = true
+kill_delay = "1s"
