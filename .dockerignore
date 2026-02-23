@@ -1,14 +1,25 @@
-node_modules
-.dockerignore
+# Git
 .git
 .gitignore
-README.md
-LICENSE
-.vscode
-Makefile
-helm-charts
+
+# Node
+node_modules
+.next
+
+# Go build
+tmp
+bin
+
+# Logs
+*.log
+
+# Env
 .env
-.editorconfig
-.idea
-coverage*
-backend/tmp
+.env.*
+
+# OS
+.DS_Store
+
+# Docker
+docker-compose.yml
+docker-compose.*.yml
