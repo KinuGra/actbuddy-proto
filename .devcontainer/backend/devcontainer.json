@@ -1,0 +1,18 @@
+{
+  "name": "backend",
+  "dockerComposeFile": ["../../docker-compose.devcontainer.yml"],
+  "service": "backend",
+  "workspaceFolder": "/repo/backend",
+  "postCreateCommand": "go mod tidy && go mod download",
+  "containerEnv": {"GOTOOLCHAIN": "local"},
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.go"
+      ]
+    }
+  },
+  "forwardPorts": [8080],
+  "remoteUser": "root",
+  "shutdownAction": "stopCompose"
+}

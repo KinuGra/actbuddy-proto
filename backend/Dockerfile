@@ -1,13 +1,14 @@
-FROM golang:1.25.4-bookworm
+FROM golang:1.23-bookworm AS builder
 WORKDIR /app
 
-COPY go.mod go.sum ./
+COPY backend/go.mod backend/go.sum ./
 RUN go mod download
+COPY backend/ .
+RUN go build -o /app/server .
 
-COPY . .
-
-# ホットリロードツール air
-RUN go install github.com/air-verse/air@latest
-
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY --from=builder /app/server .
 EXPOSE 8080
-CMD ["air", "-c", ".air.toml"]
+CMD ["./server"]

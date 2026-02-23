@@ -1,0 +1,10 @@
+FROM mcr.microsoft.com/devcontainers/go:1.23-bookworm
+
+WORKDIR /repo/backend
+COPY ./backend /repo/backend
+
+RUN go mod download
+RUN go install github.com/air-verse/air@v1.60.0
+
+EXPOSE 8080
+CMD ["air", "-c", ".air.toml"]

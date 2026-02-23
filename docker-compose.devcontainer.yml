@@ -1,0 +1,21 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile.devcontainer
+    volumes:
+      - ./:/repo
+    working_dir: /repo/backend
+    ports:
+      - "8080:8080"
+    tty: true
+  frontend:
+    build:
+      context: .
+      dockerfile: ./frontend/Dockerfile.devcontainer
+    volumes:
+      - ./:/repo
+    ports:
+      - "3000:3000"
+    tty: true
+  
