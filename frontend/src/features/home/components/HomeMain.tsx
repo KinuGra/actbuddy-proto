@@ -33,7 +33,14 @@ export default function HomeMain() {
           環境的強制力×Action itemで、行動開始率を上げる
         </p>
         <Button size="lg" asChild>
-          <Link href="/matching">
+          <Link
+            href="/matching"
+            className="inline-flex items-center px-4 py-2 rounded-md
+                 bg-black text-white
+                 hover:bg-gray-800
+                 transition-colors
+                 dark:bg-white dark:text-black dark:hover:bg-gray-200"
+          >
             <Users className="mr-2 h-5 w-5" />
             バディを探す
           </Link>
