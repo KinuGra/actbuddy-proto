@@ -1,7 +1,7 @@
 // バディ候補ユーザーの情報表示カード
 // user: バディ候補
-// onAccept: 承認ボタン押下時
-// onReject: 拒否ボタン押下時
+// onAccept: バディになるボタン押下時
+// onReject: スキップボタン押下時
 import { User } from '../../users/types/user'
 import {
   Card,
@@ -88,12 +88,18 @@ export function MatchingCard({ user, onAccept, onReject }: MatchingCardProps) {
             ))}
           </div>
         </div>
+        {/* 達成率・バディ枠説明 */}
+        <div className="bg-muted px-4 py-2 rounded-md text-sm text-muted-foreground">
+          達成率 <span className="font-bold">{user.achievementRate}%</span>{' '}
+          で、同時に <span className="font-bold">{user.buddyCount}人</span>{' '}
+          までバディになれます。
+        </div>
       </CardContent>
       <CardFooter className="flex gap-4 justify-end">
         <Button variant="outline" onClick={onReject}>
-          拒否
+          スキップ
         </Button>
-        <Button onClick={onAccept}>承認</Button>
+        <Button onClick={onAccept}>バディになる</Button>
       </CardFooter>
     </Card>
   )
