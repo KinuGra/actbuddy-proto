@@ -92,28 +92,28 @@ export default function HomeMain() {
 
       {/* 機能紹介 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
+        <Card className="pb-4">
           <CardHeader>
             <Users className="w-10 h-10 text-primary mb-2" />
             <CardTitle>マッチング</CardTitle>
             <CardDescription>目標が近い人と自動でマッチング</CardDescription>
           </CardHeader>
         </Card>
-        <Card>
+        <Card className="pb-4">
           <CardHeader>
             <Calendar className="w-10 h-10 text-primary mb-2" />
             <CardTitle>Action Item</CardTitle>
             <CardDescription>毎日のタスクを管理・公開</CardDescription>
           </CardHeader>
         </Card>
-        <Card>
+        <Card className="pb-4">
           <CardHeader>
             <MessageSquare className="w-10 h-10 text-primary mb-2" />
             <CardTitle>チャット</CardTitle>
             <CardDescription>バディと日程調整・相談</CardDescription>
           </CardHeader>
         </Card>
-        <Card>
+        <Card className="pb-4">
           <CardHeader>
             <Bell className="w-10 h-10 text-primary mb-2" />
             <CardTitle>通知</CardTitle>
