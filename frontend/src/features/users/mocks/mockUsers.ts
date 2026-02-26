@@ -36,6 +36,17 @@ export const mockUsers: User[] = [
     achievementRate: 68,
     buddyCount: 1,
   },
+  {
+    id: '4',
+    name: '高橋美咲',
+    age: 26,
+    gender: 'female',
+    goals: ['キャリアアップ', 'デザインスキル向上', 'ポートフォリオ作成'],
+    hobbies: ['イラスト', '旅行', 'カメラ'],
+    interests: ['UI/UX', 'デザイン', 'クリエイティブ'],
+    achievementRate: 79,
+    buddyCount: 2,
+  },
 ]
 
 // 現在ログインしているユーザー（モック）
