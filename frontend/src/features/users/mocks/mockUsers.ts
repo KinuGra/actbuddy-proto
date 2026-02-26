@@ -1,6 +1,6 @@
 // ユーザーモックデータと現在ユーザー（Home画面用）
 // Next.js/Feature単位での開発・テスト用
-import { User } from '../types/user';
+import { User } from '../types/user'
 
 export const mockUsers: User[] = [
   {
@@ -36,7 +36,7 @@ export const mockUsers: User[] = [
     achievementRate: 68,
     buddyCount: 1,
   },
-];
+]
 
 // 現在ログインしているユーザー（モック）
 export const currentUser: User = {
@@ -49,4 +49,4 @@ export const currentUser: User = {
   interests: ['Web開発', '技術書', 'スタートアップ'],
   achievementRate: 70,
   buddyCount: 1,
-};
+}
