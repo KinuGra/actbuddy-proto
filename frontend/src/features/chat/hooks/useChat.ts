@@ -1,10 +1,11 @@
-import { useState, useCallback } from 'react';
-import { Message, ChatRoom } from '../types/chat';
-import { mockMessages, mockChatRooms } from '../mocks/mockMessages';
+import { useState, useCallback } from 'react'
+import { Message, ChatRoom } from '../types/chat'
+import { mockMessages, mockChatRooms } from '../mocks/mockMessages'
 
 export function useChat() {
-  const [chatRooms] = useState<ChatRoom[]>(mockChatRooms);
-  const [messages, setMessages] = useState<Record<string, Message[]>>(mockMessages);
+  const [chatRooms] = useState<ChatRoom[]>(mockChatRooms)
+  const [messages, setMessages] =
+    useState<Record<string, Message[]>>(mockMessages)
 
   const sendMessage = useCallback((roomId: string, content: string) => {
     const newMessage: Message = {
@@ -14,25 +15,25 @@ export function useChat() {
       content,
       timestamp: new Date(),
       isRead: false,
-    };
+    }
 
     setMessages((prev) => ({
       ...prev,
       [roomId]: [...(prev[roomId] || []), newMessage],
-    }));
-  }, []);
+    }))
+  }, [])
 
   const getMessages = useCallback(
     (roomId: string) => {
-      return messages[roomId] || [];
+      return messages[roomId] || []
     },
     [messages]
-  );
+  )
 
   return {
     chatRooms,
     messages,
     sendMessage,
     getMessages,
-  };
+  }
 }

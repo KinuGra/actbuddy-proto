@@ -1,4 +1,4 @@
-import { ActionItem } from '../types/calendar';
+import { ActionItem } from '../types/calendar'
 
 export const mockActionItems: ActionItem[] = [
   {
@@ -61,4 +61,4 @@ export const mockActionItems: ActionItem[] = [
     status: 'planned',
     createdAt: new Date(2026, 1, 24),
   },
-];
+]

@@ -1,4 +1,4 @@
-import { Message, ChatRoom } from '../types/chat';
+import { Message, ChatRoom } from '../types/chat'
 
 export const mockMessages: Record<string, Message[]> = {
   '1': [
@@ -61,7 +61,7 @@ export const mockMessages: Record<string, Message[]> = {
       isRead: true,
     },
   ],
-};
+}
 
 export const mockChatRooms: ChatRoom[] = [
   {
@@ -78,4 +78,4 @@ export const mockChatRooms: ChatRoom[] = [
     lastMessage: mockMessages['2'][mockMessages['2'].length - 1],
     unreadCount: 0,
   },
-];
+]
