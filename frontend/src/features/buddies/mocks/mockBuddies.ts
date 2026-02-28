@@ -1,5 +1,5 @@
-import { Buddy } from '../types/buddy';
-import { mockUsers } from '../../users/mocks/mockUsers';
+import { Buddy } from '../types/buddy'
+import { mockUsers } from '../../users/mocks/mockUsers'
 
 export const mockBuddies: Buddy[] = [
   {
@@ -20,7 +20,7 @@ export const mockBuddies: Buddy[] = [
     relationType: 'buddy',
     canBecomeFriend: false,
   },
-];
+]
 
 export const mockFriends: Buddy[] = [
   {
@@ -41,4 +41,4 @@ export const mockFriends: Buddy[] = [
     relationType: 'friend',
     canBecomeFriend: false,
   },
-];
+]
