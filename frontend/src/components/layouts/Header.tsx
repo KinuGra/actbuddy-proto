@@ -115,9 +115,12 @@ export function Header() {
 
               {/* Message Mail */}
               <div className="relative">
-                <button className="p-2 hover:bg-accent rounded-lg transition-colors">
+                <Link
+                  href="/chat"
+                  className="p-2 hover:bg-accent rounded-lg transition-colors inline-block"
+                >
                   <Mail className="w-5 h-5" />
-                </button>
+                </Link>
                 {totalUnreadMessages > 0 && (
                   <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
                     {totalUnreadMessages > 9 ? '9+' : totalUnreadMessages}
