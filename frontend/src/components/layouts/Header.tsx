@@ -100,12 +100,12 @@ export function Header() {
             {/* Right side UI area */}
             <div className="flex items-center gap-2 md:gap-4">
               {/* Notification Bell */}
-              <div className="relative">
-                <button className="p-2 hover:bg-accent rounded-lg transition-colors">
+              <div className="relative inline-flex">
+                <button className="p-2 hover:bg-accent rounded-lg transition-colors flex items-center justify-center">
                   <Bell className="w-5 h-5" />
                 </button>
                 {MOCK_NOTIFICATION_COUNT > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 min-w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center leading-none font-bold">
                     {MOCK_NOTIFICATION_COUNT > 9
                       ? '9+'
                       : MOCK_NOTIFICATION_COUNT}
@@ -114,15 +114,15 @@ export function Header() {
               </div>
 
               {/* Message Mail */}
-              <div className="relative">
+              <div className="relative inline-flex">
                 <Link
                   href="/chat"
-                  className="p-2 hover:bg-accent rounded-lg transition-colors inline-block"
+                  className="p-2 hover:bg-accent rounded-lg transition-colors flex items-center justify-center"
                 >
                   <Mail className="w-5 h-5" />
                 </Link>
                 {totalUnreadMessages > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 min-w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center leading-none font-bold">
                     {totalUnreadMessages > 9 ? '9+' : totalUnreadMessages}
                   </span>
                 )}
