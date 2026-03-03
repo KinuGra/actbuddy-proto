@@ -1,16 +1,20 @@
-import { ChatRoom } from '../types/chat';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
-import { MessageSquare } from 'lucide-react';
+import { ChatRoom } from '../types/chat'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { format } from 'date-fns'
+import { MessageSquare } from 'lucide-react'
 
 interface ChatRoomListProps {
-  rooms: ChatRoom[];
-  onSelectRoom: (roomId: string) => void;
-  selectedRoomId?: string;
+  rooms: ChatRoom[]
+  onSelectRoom: (roomId: string) => void
+  selectedRoomId?: string
 }
 
-export function ChatRoomList({ rooms, onSelectRoom, selectedRoomId }: ChatRoomListProps) {
+export function ChatRoomList({
+  rooms,
+  onSelectRoom,
+  selectedRoomId,
+}: ChatRoomListProps) {
   if (rooms.length === 0) {
     return (
       <Card>
@@ -19,7 +23,7 @@ export function ChatRoomList({ rooms, onSelectRoom, selectedRoomId }: ChatRoomLi
           <p className="text-muted-foreground">チャットルームがありません</p>
         </CardContent>
       </Card>
-    );
+    )
   }
 
   return (
@@ -59,5 +63,5 @@ export function ChatRoomList({ rooms, onSelectRoom, selectedRoomId }: ChatRoomLi
         </Card>
       ))}
     </div>
-  );
+  )
 }
