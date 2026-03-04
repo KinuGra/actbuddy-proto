@@ -1,14 +1,24 @@
-"use client"
-import { useState } from 'react';
-import { useCalendar } from '@/features/calendar/hooks/useCalendar';
-import { ActionItemCard } from '@/features/calendar/components/ActionItemCard';
-import { AddActionItemDialog } from '@/features/calendar/components/AddActionItemDialog';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
-import { format, addDays, subDays } from 'date-fns';
-import { mockActionItems } from '@/features/calendar/mocks/mockActionItems';
+'use client'
+import { useState } from 'react'
+import { useCalendar } from '@/features/calendar/hooks/useCalendar'
+import { ActionItemCard } from '@/features/calendar/components/ActionItemCard'
+import { AddActionItemDialog } from '@/features/calendar/components/AddActionItemDialog'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar as CalendarIcon,
+} from 'lucide-react'
+import { format, addDays, subDays } from 'date-fns'
+import { mockActionItems } from '@/features/calendar/mocks/mockActionItems'
 
 export default function Calendar() {
   const {
@@ -19,27 +29,29 @@ export default function Calendar() {
     updateActionItemStatus,
     deleteActionItem,
     getItemsForDate,
-  } = useCalendar();
+  } = useCalendar()
 
-  const [activeTab, setActiveTab] = useState<'my' | 'buddy'>('my');
+  const [activeTab, setActiveTab] = useState<'my' | 'buddy'>('my')
 
-  const todayItems = getItemsForDate(selectedDate);
-  const myItems = todayItems.filter((item) => item.userId === 'current');
-  const buddyItems = actionItems.filter((item) => item.userId !== 'current' && 
-    new Date(item.startTime).toDateString() === selectedDate.toDateString()
-  );
+  const todayItems = getItemsForDate(selectedDate)
+  const myItems = todayItems.filter((item) => item.userId === 'current')
+  const buddyItems = actionItems.filter(
+    (item) =>
+      item.userId !== 'current' &&
+      new Date(item.startTime).toDateString() === selectedDate.toDateString()
+  )
 
   const goToPreviousDay = () => {
-    setSelectedDate(subDays(selectedDate, 1));
-  };
+    setSelectedDate(subDays(selectedDate, 1))
+  }
 
   const goToNextDay = () => {
-    setSelectedDate(addDays(selectedDate, 1));
-  };
+    setSelectedDate(addDays(selectedDate, 1))
+  }
 
   const goToToday = () => {
-    setSelectedDate(new Date());
-  };
+    setSelectedDate(new Date())
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -47,7 +59,10 @@ export default function Calendar() {
         {/* ヘッダー */}
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold">Action Item</h1>
-          <AddActionItemDialog selectedDate={selectedDate} onAdd={addActionItem} />
+          <AddActionItemDialog
+            selectedDate={selectedDate}
+            onAdd={addActionItem}
+          />
         </div>
 
         {/* 日付選択 */}
@@ -81,7 +96,10 @@ export default function Calendar() {
         </Card>
 
         {/* Action Items */}
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'my' | 'buddy')}>
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as 'my' | 'buddy')}
+        >
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="my">
               自分のAction Item ({myItems.length})
@@ -99,7 +117,10 @@ export default function Calendar() {
                   <p className="text-muted-foreground mb-4">
                     この日のAction Itemはまだありません
                   </p>
-                  <AddActionItemDialog selectedDate={selectedDate} onAdd={addActionItem} />
+                  <AddActionItemDialog
+                    selectedDate={selectedDate}
+                    onAdd={addActionItem}
+                  />
                 </CardContent>
               </Card>
             ) : (
@@ -180,5 +201,5 @@ export default function Calendar() {
         </Card>
       </div>
     </div>
-  );
+  )
 }
