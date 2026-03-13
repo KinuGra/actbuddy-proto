@@ -2,25 +2,25 @@
 
 ## インストール
 
-\```sh
+```sh
 go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
-\```
+```
 
 ## PATHを通す
 
 **Mac（zsh）**
-\```sh
+```sh
 echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.zshrc
 source ~/.zshrc
-\```
+```
 
 **Linux / WSL2（bash）**
-\```sh
+```sh
 echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.bashrc
 source ~/.bashrc
-\```
+```
 
 ## 確認
-\```sh
+```sh
 migrate --version
-\```
+```
