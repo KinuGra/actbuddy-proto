@@ -16,9 +16,9 @@ const (
 )
 
 type ActionItem struct {
-	ID          int64            `db:"id"`          // auto increment
-	UUID        uuid.UUID        `db:"uuid"`        // UUID
-	UserID      uuid.UUID        `db:"user_id"`     // リレーション
+	ID          int64            `db:"id"`
+	UUID        uuid.UUID        `db:"uuid"`
+	UserID      uuid.UUID        `db:"user_id"`
 	Title       string           `db:"title"`
 	Description string           `db:"description"`
 	StartTime   time.Time        `db:"start_time"`
@@ -27,4 +27,41 @@ type ActionItem struct {
 	Status      ActionItemStatus `db:"status"`
 	CreatedAt   time.Time        `db:"created_at"`
 	UpdatedAt   time.Time        `db:"updated_at"`
+}
+
+type UpdateRequest struct {
+	Title       *string           `json:"title"`
+	Description *string           `json:"description"`
+	StartTime   *time.Time        `json:"start_time"`
+	EndTime     *time.Time        `json:"end_time"`
+	Kind        *string           `json:"kind"`
+	Status      *ActionItemStatus `json:"status"`
+}
+
+type ActionItemResponse struct {
+	UUID        string           `json:"uuid"`
+	UserID      string           `json:"user_id"`
+	Title       string           `json:"title"`
+	Description string           `json:"description"`
+	StartTime   time.Time        `json:"start_time"`
+	EndTime     time.Time        `json:"end_time"`
+	Kind        string           `json:"kind"`
+	Status      ActionItemStatus `json:"status"`
+	CreatedAt   time.Time        `json:"created_at"`
+	UpdatedAt   time.Time        `json:"updated_at"`
+}
+
+func toResponse(item *ActionItem) *ActionItemResponse {
+	return &ActionItemResponse{
+		UUID:        item.UUID.String(),
+		UserID:      item.UserID.String(),
+		Title:       item.Title,
+		Description: item.Description,
+		StartTime:   item.StartTime,
+		EndTime:     item.EndTime,
+		Kind:        item.Kind,
+		Status:      item.Status,
+		CreatedAt:   item.CreatedAt,
+		UpdatedAt:   item.UpdatedAt,
+	}
 }
