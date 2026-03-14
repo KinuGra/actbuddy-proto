@@ -101,12 +101,20 @@ func TestGetRoomByUser(t *testing.T) {
 	}
 
 	// 返り値チェック
-	if len(rooms) != 3 {
-			t.Errorf("expected 3 rooms, got %d", len(rooms))
+		if len(rooms) != 3 {
+		t.Fatalf("expected 3 rooms, got %d", len(rooms))
 	}
 
-	for _, r := range rooms {
-			t.Logf("roomID=%d, userID1=%d, userID2=%d, createdAt=%v", r.RoomID, r.UserID1, r.UserID2, r.CreatedAt)
+	expected := []*Room{
+		{RoomID: 123, UserID1: 1, UserID2: 2, CreatedAt: fixedTime},
+		{RoomID: 124, UserID1: 1, UserID2: 3, CreatedAt: fixedTime},
+		{RoomID: 125, UserID1: 4, UserID2: 1, CreatedAt: fixedTime},
+	}
+
+	for i, r := range rooms {
+		if expected[i].RoomID != r.RoomID || expected[i].UserID1 != r.UserID1 || expected[i].UserID2 != r.UserID2 || !expected[i].CreatedAt.Equal(r.CreatedAt) {
+			t.Errorf("unexpected room at index %d.\ngot:  %+v\nwant: %+v", i, r, expected[i])
+		}
 	}
 
 	// モックの期待値が満たされているかチェック
