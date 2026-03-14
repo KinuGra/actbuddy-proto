@@ -87,7 +87,7 @@ func TestGetRoomByUser(t *testing.T) {
 	fixedTime := time.Date(2026, 3, 14, 12, 0, 0, 0, time.UTC)
 
 	// モックするクエリと返す値
-	mock.ExpectQuery(`SELECT room_id, user_id1, user_id2, created_at.*user_id1 = \$1.*user_id2 = \$1`).
+	mock.ExpectQuery(`SELECT room_id, user_id1, user_id2, created_at FROM rooms WHERE user_id1 = \$1 OR user_id2 = \$1`).
     WithArgs(int64(1)).
     WillReturnRows(sqlmock.NewRows([]string{"room_id", "user_id1", "user_id2", "created_at"}).
         AddRow(123, 1, 2, fixedTime).
