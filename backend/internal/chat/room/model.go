@@ -1,4 +1,4 @@
-package models
+package room
 
 import ("time")
 
