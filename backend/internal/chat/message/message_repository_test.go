@@ -2,9 +2,9 @@ package message
 
 import (
 	"context"
+	"github.com/DATA-DOG/go-sqlmock"
 	"testing"
 	"time"
-	"github.com/DATA-DOG/go-sqlmock"
 )
 
 func TestSendMessage(t *testing.T) {
@@ -41,7 +41,7 @@ func TestGetMessageByRoomID(t *testing.T) {
 
 	fixedTime := time.Date(2026, 3, 14, 12, 0, 0, 0, time.UTC)
 
-	mock.ExpectQuery(`SELECT message_id, room_id, messenger_id, message, created_at FROM messages WHERE room_id = \$1`).
+	mock.ExpectQuery(`SELECT message_id, room_id, messenger_id, message, created_at FROM messages WHERE room_id = $1`).
 		WithArgs(int64(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"message_id", "room_id", "messenger_id", "message", "created_at"}).
 			AddRow(1, 1, 2, "hello", fixedTime).

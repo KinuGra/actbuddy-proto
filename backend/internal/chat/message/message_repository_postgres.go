@@ -10,7 +10,7 @@ type PostgresRepository struct {
 }
 
 func NewPostgresRepository(db *sql.DB) MessageRepository {
-	return &PostgresRepository{db:db}
+	return &PostgresRepository{db: db}
 }
 
 func (r *PostgresRepository) SendMessage(ctx context.Context, roomID int64, userID int64, message string) (int64, error) {
@@ -21,7 +21,7 @@ func (r *PostgresRepository) SendMessage(ctx context.Context, roomID int64, user
 
 	var messageID int64
 
-	err := r.db.QueryRowContext(ctx, query,roomID, userID, message).Scan(&messageID)
+	err := r.db.QueryRowContext(ctx, query, roomID, userID, message).Scan(&messageID)
 
 	if err != nil {
 		return 0, err
@@ -30,7 +30,7 @@ func (r *PostgresRepository) SendMessage(ctx context.Context, roomID int64, user
 	return messageID, nil
 }
 
-func (r *PostgresRepository) GetMessageByRoomID (ctx context.Context, roomID int64) ([]*Message, error) {
+func (r *PostgresRepository) GetMessageByRoomID(ctx context.Context, roomID int64) ([]*Message, error) {
 	query := `
 	SELECT message_id, room_id, messenger_id, message, created_at FROM messages
 	WHERE room_id = $1
@@ -46,7 +46,7 @@ func (r *PostgresRepository) GetMessageByRoomID (ctx context.Context, roomID int
 	var messages []*Message
 	for rows.Next() {
 		var message Message
-		if err := rows.Scan(&message.MessageID, &message.RoomID, &message.MessengerID, &message.Message, &message.CreatedAt); err!= nil {
+		if err := rows.Scan(&message.MessageID, &message.RoomID, &message.MessengerID, &message.Message, &message.CreatedAt); err != nil {
 			return nil, err
 		}
 
