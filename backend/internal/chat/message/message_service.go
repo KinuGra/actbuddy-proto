@@ -8,7 +8,7 @@ type MessageService struct {
 	repo MessageRepository
 }
 
-func (s *MessageService) NewMessageService(repo MessageRepository) *MessageService {
+func NewMessageService(repo MessageRepository) *MessageService {
 	return &MessageService{repo: repo}
 }
 
