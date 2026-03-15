@@ -35,10 +35,10 @@ func TestSendMessage(t *testing.T) {
 }
 
 func TestGetMessageByRoomID(t *testing.T) {
-db, mock, err := sqlmock.New()
-if err != nil {
-	t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-}
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
 	defer db.Close()
 
 	repo := NewPostgresRepository(db)
