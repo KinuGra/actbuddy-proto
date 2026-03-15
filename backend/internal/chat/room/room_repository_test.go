@@ -2,9 +2,9 @@ package room
 
 import (
 	"context"
+	"github.com/DATA-DOG/go-sqlmock"
 	"testing"
 	"time"
-	"github.com/DATA-DOG/go-sqlmock"
 )
 
 func TestCreateRoom(t *testing.T) {
@@ -54,7 +54,7 @@ func TestGetRoomByID(t *testing.T) {
 	  WHERE room_id = \$1`).
 		WithArgs(int64(123)).
 		WillReturnRows(sqlmock.NewRows([]string{"room_id", "user_id1", "user_id2", "created_at"}).
-    AddRow(123, 10, 20, fixedTime))
+			AddRow(123, 10, 20, fixedTime))
 
 	ctx := context.Background()
 	room, err := repo.GetRoomByID(ctx, 123)
@@ -64,7 +64,7 @@ func TestGetRoomByID(t *testing.T) {
 
 	if room.RoomID != 123 || room.UserID1 != 10 || room.UserID2 != 20 || room.CreatedAt != fixedTime {
 		t.Errorf(
-      "expected roomID=123, userID1=10, userID2=20, CreatedAt=%v, got roomID=%d, userID1=%d, userID2=%d, CreatedAt=%v",
+			"expected roomID=123, userID1=10, userID2=20, CreatedAt=%v, got roomID=%d, userID1=%d, userID2=%d, CreatedAt=%v",
 			fixedTime, room.RoomID, room.UserID1, room.UserID2, room.CreatedAt,
 		)
 	}
@@ -88,11 +88,11 @@ func TestGetRoomByUser(t *testing.T) {
 
 	// モックするクエリと返す値
 	mock.ExpectQuery(`SELECT room_id, user_id1, user_id2, created_at FROM rooms WHERE user_id1 = \$1 OR user_id2 = \$1`).
-    WithArgs(int64(1)).
-    WillReturnRows(sqlmock.NewRows([]string{"room_id", "user_id1", "user_id2", "created_at"}).
-        AddRow(123, 1, 2, fixedTime).
-        AddRow(124, 1, 3, fixedTime).
-        AddRow(125, 4, 1, fixedTime))
+		WithArgs(int64(1)).
+		WillReturnRows(sqlmock.NewRows([]string{"room_id", "user_id1", "user_id2", "created_at"}).
+			AddRow(123, 1, 2, fixedTime).
+			AddRow(124, 1, 3, fixedTime).
+			AddRow(125, 4, 1, fixedTime))
 
 	ctx := context.Background()
 	rooms, err := repo.GetRoomByUser(ctx, 1)
@@ -101,7 +101,7 @@ func TestGetRoomByUser(t *testing.T) {
 	}
 
 	// 返り値チェック
-		if len(rooms) != 3 {
+	if len(rooms) != 3 {
 		t.Fatalf("expected 3 rooms, got %d", len(rooms))
 	}
 
