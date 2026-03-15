@@ -3,6 +3,7 @@ package message
 import (
 	"context"
 	"github.com/DATA-DOG/go-sqlmock"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -41,7 +42,7 @@ func TestGetMessageByRoomID(t *testing.T) {
 
 	fixedTime := time.Date(2026, 3, 14, 12, 0, 0, 0, time.UTC)
 
-	mock.ExpectQuery(`SELECT message_id, room_id, messenger_id, message, created_at FROM messages WHERE room_id = $1`).
+	mock.ExpectQuery(`SELECT message_id, room_id, messenger_id, message, created_at FROM messages WHERE room_id = \$1`).
 		WithArgs(int64(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"message_id", "room_id", "messenger_id", "message", "created_at"}).
 			AddRow(1, 1, 2, "hello", fixedTime).
@@ -62,10 +63,8 @@ func TestGetMessageByRoomID(t *testing.T) {
 		{MessageID: 2, RoomID: 1, MessengerID: 3, Message: "hi", CreatedAt: fixedTime},
 	}
 
-	for i, m := range messages {
-		if expected[i].MessageID != m.MessageID || expected[i].RoomID != m.RoomID || expected[i].MessengerID != m.MessengerID || expected[i].Message != m.Message || expected[i].CreatedAt != fixedTime {
-			t.Errorf("unexpected room at index %d.\ngot:  %+v\nwant: %+v", i, m, expected[i])
-		}
+	if !reflect.DeepEqual(expected, messages) {
+		t.Errorf("unexpected messages.\ngot:  %+v\nwant: %+v", messages, expected)
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
