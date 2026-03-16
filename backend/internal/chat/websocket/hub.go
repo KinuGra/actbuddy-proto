@@ -27,8 +27,8 @@ func getRoomsByID(id int64) []int64 {
 
 var testRooms = map[int64][]int64{
 	1: {1, 2},
-	2: {2},
-	3: {1},
+	2: {1},
+	3: {2},
 }
 
 func (h *Hub) Run() {
