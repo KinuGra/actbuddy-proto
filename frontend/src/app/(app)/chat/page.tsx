@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useChat } from '@/features/chat/hooks/useChat'
 import { ChatRoomList } from '@/features/chat/components/ChatRoomList'
 import { ChatWindow } from '@/features/chat/components/ChatWindow'
@@ -14,6 +14,19 @@ export default function Chat() {
 
   const selectedRoom = chatRooms.find((room) => room.id === selectedRoomId)
   const messages = selectedRoomId ? getMessages(selectedRoomId) : []
+
+  // userIdの手動設定
+  // todo: 認証からuserIdを取得
+  const [userId, setUserId] = useState("1")
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    setUserId(urlParams.get("userId") || "1");
+  }, []);
+
+  useEffect(() => {
+    console.log("現在の userId:", userId);
+  }, [userId]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -37,7 +50,7 @@ export default function Chat() {
               participantName={selectedRoom.participantName}
               messages={messages}
               onSendMessage={(content) => sendMessage(selectedRoomId!, content)}
-              wsURL='ws://localhost:8080/ws'
+              wsURL={`ws://localhost:8080/ws?userId=${userId}`}
             />
           ) : (
             <Card className="h-[600px]">
