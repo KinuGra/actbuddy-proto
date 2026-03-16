@@ -1,17 +1,17 @@
 package websocket
 
 import (
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"log"
 
 	"github.com/gorilla/websocket"
 )
 
 func TestServeWsSingleClient(t *testing.T) {
 	hub := NewHub()
-	go hub.run()
+	go hub.Run()
 
 	// HTTP テストサーバー
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +49,7 @@ func TestServeWsSingleClient(t *testing.T) {
 
 func TestServeWsMultipleClients(t *testing.T) {
 	hub := NewHub()
-	go hub.run()
+	go hub.Run()
 
 	// HTTP テストサーバー
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

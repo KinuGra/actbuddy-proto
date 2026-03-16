@@ -5,15 +5,15 @@ import (
 )
 
 type Hub struct {
-	clients map[*Client]bool
-	broadcast chan []byte
-	register chan *Client
+	clients    map[*Client]bool
+	broadcast  chan []byte
+	register   chan *Client
 	unregister chan *Client
 }
 
 func NewHub() *Hub {
 	return &Hub{
-		clients: 	make(map[*Client]bool),
+		clients:    make(map[*Client]bool),
 		broadcast:  make(chan []byte),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
@@ -23,7 +23,7 @@ func NewHub() *Hub {
 func (h *Hub) Run() {
 	for {
 		select {
-		case client := <- h.register:
+		case client := <-h.register:
 			h.clients[client] = true
 			log.Printf("Client registered: %v", client.conn.RemoteAddr())
 

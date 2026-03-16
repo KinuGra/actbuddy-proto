@@ -1,12 +1,12 @@
 package websocket
 
 import (
-	"log"
 	"github.com/gorilla/websocket"
+	"log"
 )
 
 type Client struct {
-	hub *Hub
+	hub  *Hub
 	conn *websocket.Conn
 	send chan []byte
 }
@@ -21,7 +21,7 @@ func (c *Client) readPump() {
 	defer func() {
 		c.hub.unregister <- c
 		c.conn.Close()
-	} ()
+	}()
 
 	for {
 		_, message, err := c.conn.ReadMessage()
