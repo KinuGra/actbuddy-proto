@@ -16,15 +16,18 @@ interface ChatWindowProps {
   participantName: string
   messages: Message[]
   onSendMessage: (content: string) => void
+  wsURL: string
 }
 
 export function ChatWindow({
   participantName,
   messages,
   onSendMessage,
+  wsURL,
 }: ChatWindowProps) {
   const [inputValue, setInputValue] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const wsRef = useRef<WebSocket | null>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -34,9 +37,37 @@ export function ChatWindow({
     scrollToBottom()
   }, [messages])
 
+  useEffect(() => {
+    //接続の開始
+    const ws = new WebSocket(wsURL)
+    wsRef.current = ws
+
+    ws.onopen = () => console.log("Web socket opened")
+
+    // サーバーからのメッセージの取得
+    ws.onmessage = (event) => {
+      console.log("Received:", event.data)
+    }
+    ws.onclose = () => console.log('WebSocket disconnected')
+
+    return () => ws.close()
+  }, [wsURL])
+
+  // サーバーへメッセージを送る
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (inputValue.trim()) {
+      const newMessage: Message = {
+        id: `m${Date.now()}`,
+        senderId: '3',
+        senderName: 'あなた',
+        content: inputValue.trim(),
+        timestamp: new Date(),
+        isRead: false,
+      }
+
+      // websocketでメッセージを送信
+      wsRef.current?.send(JSON.stringify(newMessage))
       onSendMessage(inputValue)
       setInputValue('')
     }
