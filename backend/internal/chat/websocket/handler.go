@@ -29,11 +29,7 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create Client
-	client := &Client{
-		hub:  hub,
-		conn: conn,
-		send: make(chan []byte, 256),
-	}
+	client := NewClient(hub, conn, make(chan []byte, 256))
 	hub.register <- client
 
 	go client.writePump()
