@@ -14,7 +14,8 @@ import (
 // upgrader: HTTP to websocket
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
-		return true
+		origin := r.Header.Get("Origin")
+		return origin == "http://localhost:3000"
 	},
 }
 
