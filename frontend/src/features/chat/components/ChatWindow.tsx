@@ -59,8 +59,8 @@ export function ChatWindow({
     if (inputValue.trim()) {
       const newMessage: Message = {
         id: `m${Date.now()}`,
-        senderId: '3',
-        senderName: 'あなた',
+        senderId: '3', //認証情報から取得
+        senderName: 'あなた', //認証情報から取得
         content: inputValue.trim(),
         timestamp: new Date(),
         isRead: false,
