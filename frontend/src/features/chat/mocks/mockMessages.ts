@@ -4,6 +4,7 @@ export const mockMessages: Record<string, Message[]> = {
   '1': [
     {
       id: 'm1',
+      roomId: '1',
       senderId: '1',
       senderName: '田中太郎',
       content: 'こんにちは！バディになれて嬉しいです。',
@@ -12,6 +13,7 @@ export const mockMessages: Record<string, Message[]> = {
     },
     {
       id: 'm2',
+      roomId: '1',
       senderId: 'current',
       senderName: 'あなた',
       content: 'よろしくお願いします！',
@@ -20,6 +22,7 @@ export const mockMessages: Record<string, Message[]> = {
     },
     {
       id: 'm3',
+      roomId: '1',
       senderId: '1',
       senderName: '田中太郎',
       content: 'もくもく会の日程ですが、今週の金曜日19時からどうでしょうか？',
@@ -28,6 +31,7 @@ export const mockMessages: Record<string, Message[]> = {
     },
     {
       id: 'm4',
+      roomId: '1',
       senderId: 'current',
       senderName: 'あなた',
       content: '大丈夫です！金曜日19時で設定しますね。',
@@ -36,6 +40,7 @@ export const mockMessages: Record<string, Message[]> = {
     },
     {
       id: 'm5',
+      roomId: '1',
       senderId: '1',
       senderName: '田中太郎',
       content: 'ありがとうございます！楽しみにしてます。',
@@ -46,6 +51,7 @@ export const mockMessages: Record<string, Message[]> = {
   '2': [
     {
       id: 'm6',
+      roomId: '2',
       senderId: '2',
       senderName: '佐藤花子',
       content: 'はじめまして！一緒に頑張りましょう！',
@@ -54,6 +60,7 @@ export const mockMessages: Record<string, Message[]> = {
     },
     {
       id: 'm7',
+      roomId: '2',
       senderId: 'current',
       senderName: 'あなた',
       content: 'よろしくお願いします！',
