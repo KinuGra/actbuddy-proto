@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"backend/internal/chat/websocket"
 )
 
 func main() {
@@ -19,6 +20,13 @@ func main() {
 
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"ok": true})
+	})
+
+	hub := websocket.NewHub()
+  go hub.Run()
+
+	r.GET("/ws", func(c *gin.Context) {
+		websocket.ServeWs(hub, c.Writer, c.Request)
 	})
 
 	_ = r.Run("0.0.0.0:8080")
