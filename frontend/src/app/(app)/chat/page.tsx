@@ -37,6 +37,7 @@ export default function Chat() {
               participantName={selectedRoom.participantName}
               messages={messages}
               onSendMessage={(content) => sendMessage(selectedRoomId!, content)}
+              wsURL='ws://localhost:8080/ws'
             />
           ) : (
             <Card className="h-[600px]">
