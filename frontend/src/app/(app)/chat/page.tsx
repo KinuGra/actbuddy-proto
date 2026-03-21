@@ -1,17 +1,19 @@
-"use client";
-import { useState } from 'react';
-import { useChat } from '@/features/chat/hooks/useChat';
-import { ChatRoomList } from '@/features/chat/components/ChatRoomList';
-import { ChatWindow } from '@/features/chat/components/ChatWindow';
-import { Card, CardContent } from '@/components/ui/card';
-import { MessageSquare } from 'lucide-react';
+'use client'
+import { useState } from 'react'
+import { useChat } from '@/features/chat/hooks/useChat'
+import { ChatRoomList } from '@/features/chat/components/ChatRoomList'
+import { ChatWindow } from '@/features/chat/components/ChatWindow'
+import { Card, CardContent } from '@/components/ui/card'
+import { MessageSquare } from 'lucide-react'
 
 export default function Chat() {
-  const { chatRooms, sendMessage, getMessages } = useChat();
-  const [selectedRoomId, setSelectedRoomId] = useState<string | undefined>(undefined);
+  const { chatRooms, sendMessage, getMessages } = useChat()
+  const [selectedRoomId, setSelectedRoomId] = useState<string | undefined>(
+    undefined
+  )
 
-  const selectedRoom = chatRooms.find((room) => room.id === selectedRoomId);
-  const messages = selectedRoomId ? getMessages(selectedRoomId) : [];
+  const selectedRoom = chatRooms.find((room) => room.id === selectedRoomId)
+  const messages = selectedRoomId ? getMessages(selectedRoomId) : []
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -35,6 +37,7 @@ export default function Chat() {
               participantName={selectedRoom.participantName}
               messages={messages}
               onSendMessage={(content) => sendMessage(selectedRoomId!, content)}
+              wsURL='ws://localhost:8080/ws'
             />
           ) : (
             <Card className="h-[600px]">
@@ -49,5 +52,5 @@ export default function Chat() {
         </div>
       </div>
     </div>
-  );
+  )
 }

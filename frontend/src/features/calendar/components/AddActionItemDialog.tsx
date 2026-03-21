@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -7,43 +7,46 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Plus } from 'lucide-react';
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Plus } from 'lucide-react'
 
 interface AddActionItemDialogProps {
-  selectedDate: Date;
+  selectedDate: Date
   onAdd: (item: {
-    userId: string;
-    title: string;
-    description?: string;
-    startTime: Date;
-    endTime: Date;
-    status: 'planned';
-  }) => void;
+    userId: string
+    title: string
+    description?: string
+    startTime: Date
+    endTime: Date
+    status: 'planned'
+  }) => void
 }
 
-export function AddActionItemDialog({ selectedDate, onAdd }: AddActionItemDialogProps) {
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [startTime, setStartTime] = useState('09:00');
-  const [endTime, setEndTime] = useState('10:00');
+export function AddActionItemDialog({
+  selectedDate,
+  onAdd,
+}: AddActionItemDialogProps) {
+  const [open, setOpen] = useState(false)
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [startTime, setStartTime] = useState('09:00')
+  const [endTime, setEndTime] = useState('10:00')
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const [startHour, startMinute] = startTime.split(':').map(Number);
-    const [endHour, endMinute] = endTime.split(':').map(Number);
+    e.preventDefault()
 
-    const start = new Date(selectedDate);
-    start.setHours(startHour, startMinute, 0, 0);
+    const [startHour, startMinute] = startTime.split(':').map(Number)
+    const [endHour, endMinute] = endTime.split(':').map(Number)
 
-    const end = new Date(selectedDate);
-    end.setHours(endHour, endMinute, 0, 0);
+    const start = new Date(selectedDate)
+    start.setHours(startHour, startMinute, 0, 0)
+
+    const end = new Date(selectedDate)
+    end.setHours(endHour, endMinute, 0, 0)
 
     onAdd({
       userId: 'current',
@@ -52,15 +55,15 @@ export function AddActionItemDialog({ selectedDate, onAdd }: AddActionItemDialog
       startTime: start,
       endTime: end,
       status: 'planned',
-    });
+    })
 
     // リセット
-    setTitle('');
-    setDescription('');
-    setStartTime('09:00');
-    setEndTime('10:00');
-    setOpen(false);
-  };
+    setTitle('')
+    setDescription('')
+    setStartTime('09:00')
+    setEndTime('10:00')
+    setOpen(false)
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -74,9 +77,7 @@ export function AddActionItemDialog({ selectedDate, onAdd }: AddActionItemDialog
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>新しいAction Item</DialogTitle>
-            <DialogDescription>
-              今日やることを登録しましょう
-            </DialogDescription>
+            <DialogDescription>今日やることを登録しましょう</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
@@ -123,7 +124,11 @@ export function AddActionItemDialog({ selectedDate, onAdd }: AddActionItemDialog
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
               キャンセル
             </Button>
             <Button type="submit" disabled={!title}>
@@ -133,5 +138,5 @@ export function AddActionItemDialog({ selectedDate, onAdd }: AddActionItemDialog
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }
