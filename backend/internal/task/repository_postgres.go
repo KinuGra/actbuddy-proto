@@ -17,6 +17,28 @@ func NewPostgresRepository(db *sql.DB) Repository {
 	return &postgresRepository{db: db}
 }
 
+func (r *postgresRepository) Create(ctx context.Context, item *ActionItem) (*ActionItem, error) {
+	item.UUID = uuid.New()
+	err := r.db.QueryRowContext(ctx, `
+		INSERT INTO action_items (uuid, user_id, title, description, start_time, end_time, kind, status)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		RETURNING id, uuid, user_id, title, description, start_time, end_time, kind, status, created_at, updated_at
+	`,
+		item.UUID, item.UserID, item.Title, item.Description,
+		item.StartTime, item.EndTime, item.Kind, item.Status,
+	).Scan(
+		&item.ID, &item.UUID, &item.UserID,
+		&item.Title, &item.Description,
+		&item.StartTime, &item.EndTime,
+		&item.Kind, &item.Status,
+		&item.CreatedAt, &item.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return item, nil
+}
+
 func (r *postgresRepository) FindByUUID(ctx context.Context, id uuid.UUID) (*ActionItem, error) {
 	item := &ActionItem{}
 	err := r.db.QueryRowContext(ctx, `
@@ -62,6 +84,34 @@ func (r *postgresRepository) Update(ctx context.Context, item *ActionItem) (*Act
 		return nil, err
 	}
 	return item, nil
+}
+
+func (r *postgresRepository) FindByUserID(ctx context.Context, userID uuid.UUID) ([]*ActionItem, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT id, uuid, user_id, title, description, start_time, end_time, kind, status, created_at, updated_at
+		FROM action_items WHERE user_id = $1
+		ORDER BY start_time ASC
+	`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []*ActionItem
+	for rows.Next() {
+		item := &ActionItem{}
+		if err := rows.Scan(
+			&item.ID, &item.UUID, &item.UserID,
+			&item.Title, &item.Description,
+			&item.StartTime, &item.EndTime,
+			&item.Kind, &item.Status,
+			&item.CreatedAt, &item.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+	return items, rows.Err()
 }
 
 func (r *postgresRepository) Delete(ctx context.Context, id uuid.UUID) error {

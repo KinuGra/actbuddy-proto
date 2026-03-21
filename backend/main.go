@@ -55,6 +55,8 @@ func main() {
 	v1 := r.Group("/api/v1")
 	{
 		actionItems := v1.Group("/action-items")
+		actionItems.POST("", taskHandler.Create)
+		actionItems.GET("", taskHandler.List)
 		actionItems.GET("/:uuid", taskHandler.Get)
 		actionItems.PUT("/:uuid", taskHandler.Update)
 		actionItems.DELETE("/:uuid", taskHandler.Delete)

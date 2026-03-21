@@ -29,6 +29,16 @@ type ActionItem struct {
 	UpdatedAt   time.Time        `db:"updated_at"`
 }
 
+type CreateRequest struct {
+	UserID      uuid.UUID        `json:"user_id"      binding:"required"`
+	Title       string           `json:"title"        binding:"required"`
+	Description string           `json:"description"`
+	StartTime   time.Time        `json:"start_time"   binding:"required"`
+	EndTime     time.Time        `json:"end_time"     binding:"required"`
+	Kind        string           `json:"kind"         binding:"required"`
+	Status      ActionItemStatus `json:"status"       binding:"required"`
+}
+
 type UpdateRequest struct {
 	Title       *string           `json:"title"`
 	Description *string           `json:"description"`
