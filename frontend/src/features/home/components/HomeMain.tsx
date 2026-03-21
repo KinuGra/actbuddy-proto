@@ -19,11 +19,13 @@ import {
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import HealthStatus from './HealthStatus'
 
 export default function HomeMain() {
   // Home画面のUI構成。バディの達成率・目標・機能紹介などを表示
   return (
     <div className="container mx-auto px-4 py-8">
+      <HealthStatus />
       {/* ヒーローセクション */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">
