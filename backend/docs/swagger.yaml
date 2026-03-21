@@ -1,0 +1,24 @@
+basePath: /
+host: localhost:8080
+info:
+  contact: {}
+  description: ActBuddy backend API
+  title: ActBuddy API
+  version: "1.0"
+paths:
+  /health:
+    get:
+      description: サーバーの死活確認
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+      summary: ヘルスチェック
+      tags:
+      - system
+swagger: "2.0"
