@@ -26,8 +26,12 @@ func NewService(repo Repository) Service {
 }
 
 func (s *service) Create(ctx context.Context, req *CreateRequest) (*ActionItem, error) {
+	userID, err := uuid.Parse(req.UserID)
+	if err != nil {
+		return nil, err
+	}
 	item := &ActionItem{
-		UserID:      req.UserID,
+		UserID:      userID,
 		Title:       req.Title,
 		Description: req.Description,
 		StartTime:   req.StartTime,
