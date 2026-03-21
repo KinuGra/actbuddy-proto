@@ -1,4 +1,89 @@
 basePath: /
+definitions:
+  task.ActionItemResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      end_time:
+        type: string
+      kind:
+        type: string
+      start_time:
+        type: string
+      status:
+        $ref: '#/definitions/task.ActionItemStatus'
+      title:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+      uuid:
+        type: string
+    type: object
+  task.ActionItemStatus:
+    enum:
+    - completed
+    - progress_70
+    - progress_30
+    - not_started
+    type: string
+    x-enum-comments:
+      ActionItemStatusCompleted: 完了
+      ActionItemStatusNotStarted: 未完了
+      ActionItemStatusProgress30: 30%
+      ActionItemStatusProgress70: 70%
+    x-enum-descriptions:
+    - 完了
+    - 70%
+    - 30%
+    - 未完了
+    x-enum-varnames:
+    - ActionItemStatusCompleted
+    - ActionItemStatusProgress70
+    - ActionItemStatusProgress30
+    - ActionItemStatusNotStarted
+  task.CreateRequest:
+    properties:
+      description:
+        type: string
+      end_time:
+        type: string
+      kind:
+        type: string
+      start_time:
+        type: string
+      status:
+        $ref: '#/definitions/task.ActionItemStatus'
+      title:
+        type: string
+      user_id:
+        type: string
+    required:
+    - end_time
+    - kind
+    - start_time
+    - status
+    - title
+    - user_id
+    type: object
+  task.UpdateRequest:
+    properties:
+      description:
+        type: string
+      end_time:
+        type: string
+      kind:
+        type: string
+      start_time:
+        type: string
+      status:
+        $ref: '#/definitions/task.ActionItemStatus'
+      title:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -6,6 +91,195 @@ info:
   title: ActBuddy API
   version: "1.0"
 paths:
+  /api/v1/action-items:
+    get:
+      description: 指定ユーザーのアクションアイテム一覧を取得する
+      parameters:
+      - description: ユーザーUUID
+        in: query
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              items:
+                $ref: '#/definitions/task.ActionItemResponse'
+              type: array
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: アクションアイテム一覧取得
+      tags:
+      - action-items
+    post:
+      consumes:
+      - application/json
+      description: 新しいアクションアイテムを作成する
+      parameters:
+      - description: アクションアイテム情報
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/task.CreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              $ref: '#/definitions/task.ActionItemResponse'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: アクションアイテム作成
+      tags:
+      - action-items
+  /api/v1/action-items/{uuid}:
+    delete:
+      description: UUIDでアクションアイテムを削除する
+      parameters:
+      - description: アクションアイテムUUID
+        in: path
+        name: uuid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: アクションアイテム削除
+      tags:
+      - action-items
+    get:
+      description: UUIDでアクションアイテムを1件取得する
+      parameters:
+      - description: アクションアイテムUUID
+        in: path
+        name: uuid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              $ref: '#/definitions/task.ActionItemResponse'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: アクションアイテム取得
+      tags:
+      - action-items
+    put:
+      consumes:
+      - application/json
+      description: UUIDでアクションアイテムを部分更新する
+      parameters:
+      - description: アクションアイテムUUID
+        in: path
+        name: uuid
+        required: true
+        type: string
+      - description: 更新内容
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/task.UpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              $ref: '#/definitions/task.ActionItemResponse'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: アクションアイテム更新
+      tags:
+      - action-items
   /health:
     get:
       description: サーバーの死活確認

@@ -2,7 +2,25 @@
 
 import type { Client, Options as Options2, TDataShape } from './client'
 import { client } from './client.gen'
-import type { GetHealthData, GetHealthResponses } from './types.gen'
+import type {
+  DeleteApiV1ActionItemsByUuidData,
+  DeleteApiV1ActionItemsByUuidErrors,
+  DeleteApiV1ActionItemsByUuidResponses,
+  GetApiV1ActionItemsByUuidData,
+  GetApiV1ActionItemsByUuidErrors,
+  GetApiV1ActionItemsByUuidResponses,
+  GetApiV1ActionItemsData,
+  GetApiV1ActionItemsErrors,
+  GetApiV1ActionItemsResponses,
+  GetHealthData,
+  GetHealthResponses,
+  PostApiV1ActionItemsData,
+  PostApiV1ActionItemsErrors,
+  PostApiV1ActionItemsResponses,
+  PutApiV1ActionItemsByUuidData,
+  PutApiV1ActionItemsByUuidErrors,
+  PutApiV1ActionItemsByUuidResponses,
+} from './types.gen'
 
 export type Options<
   TData extends TDataShape = TDataShape,
@@ -20,6 +38,92 @@ export type Options<
    */
   meta?: Record<string, unknown>
 }
+
+/**
+ * アクションアイテム一覧取得
+ *
+ * 指定ユーザーのアクションアイテム一覧を取得する
+ */
+export const getApiV1ActionItems = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiV1ActionItemsData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    GetApiV1ActionItemsResponses,
+    GetApiV1ActionItemsErrors,
+    ThrowOnError
+  >({ url: '/api/v1/action-items', ...options })
+
+/**
+ * アクションアイテム作成
+ *
+ * 新しいアクションアイテムを作成する
+ */
+export const postApiV1ActionItems = <ThrowOnError extends boolean = false>(
+  options: Options<PostApiV1ActionItemsData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    PostApiV1ActionItemsResponses,
+    PostApiV1ActionItemsErrors,
+    ThrowOnError
+  >({
+    url: '/api/v1/action-items',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  })
+
+/**
+ * アクションアイテム削除
+ *
+ * UUIDでアクションアイテムを削除する
+ */
+export const deleteApiV1ActionItemsByUuid = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<DeleteApiV1ActionItemsByUuidData, ThrowOnError>
+) =>
+  (options.client ?? client).delete<
+    DeleteApiV1ActionItemsByUuidResponses,
+    DeleteApiV1ActionItemsByUuidErrors,
+    ThrowOnError
+  >({ url: '/api/v1/action-items/{uuid}', ...options })
+
+/**
+ * アクションアイテム取得
+ *
+ * UUIDでアクションアイテムを1件取得する
+ */
+export const getApiV1ActionItemsByUuid = <ThrowOnError extends boolean = false>(
+  options: Options<GetApiV1ActionItemsByUuidData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    GetApiV1ActionItemsByUuidResponses,
+    GetApiV1ActionItemsByUuidErrors,
+    ThrowOnError
+  >({ url: '/api/v1/action-items/{uuid}', ...options })
+
+/**
+ * アクションアイテム更新
+ *
+ * UUIDでアクションアイテムを部分更新する
+ */
+export const putApiV1ActionItemsByUuid = <ThrowOnError extends boolean = false>(
+  options: Options<PutApiV1ActionItemsByUuidData, ThrowOnError>
+) =>
+  (options.client ?? client).put<
+    PutApiV1ActionItemsByUuidResponses,
+    PutApiV1ActionItemsByUuidErrors,
+    ThrowOnError
+  >({
+    url: '/api/v1/action-items/{uuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  })
 
 /**
  * ヘルスチェック
