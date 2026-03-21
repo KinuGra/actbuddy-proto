@@ -61,7 +61,7 @@ func (r *postgresRepository) FindByUUID(ctx context.Context, id uuid.UUID) (*Act
 }
 
 func (r *postgresRepository) Update(ctx context.Context, item *ActionItem) (*ActionItem, error) {
-	item.UpdatedAt = time.Now()
+	item.UpdatedAt = time.Now().UTC()
 	err := r.db.QueryRowContext(ctx, `
 		UPDATE action_items
 		SET title=$1, description=$2, start_time=$3, end_time=$4, kind=$5, status=$6, updated_at=$7
