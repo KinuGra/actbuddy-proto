@@ -1,12 +1,31 @@
-# swag (Swagger) ドキュメント生成
+# swag / OpenAPI コードgen
 
 ## 概要
 
-swaggo/swag を使って Go の Swagger ドキュメントを管理する。
+swaggo/swag で Go の Swagger spec を生成し、@hey-api/openapi-ts でフロントエンドの TypeScript クライアントを自動生成する。
 
-## ルール
+## 全体の流れ
 
-### ハンドラの書き方
+```
+backend/main.go (アノテーション)
+  → swag init → backend/docs/swagger.json
+    → openapi-ts → frontend/src/client/ (自動生成SDK)
+      → コンポーネントで使用
+```
+
+## 一括生成コマンド
+
+APIを変更したら**必ずルートで実行**:
+
+```bash
+make codegen
+```
+
+内部的には:
+1. `cd backend && swag init -g main.go -o docs`
+2. `cd frontend && pnpm run generate:api`
+
+## バックエンド：ハンドラの書き方
 
 アノテーションは **named function** にのみ有効。インライン関数には付けられない。
 
@@ -38,20 +57,19 @@ func handlerName(c *gin.Context) {
 // @BasePath        /
 ```
 
-### docs の再生成
+## フロントエンド：クライアントの使い方
 
-ハンドラを追加・変更したら必ず実行:
+`frontend/src/client/` は手動編集禁止。`make codegen` で再生成する。
 
-```bash
-cd backend && swag init
+クライアントの初期化は `src/lib/apiClient.ts` で行う（`NEXT_PUBLIC_API_BASE_URL` を注入）。
+
+```ts
+// コンポーネントからの呼び出し例
+import '@/lib/apiClient'           // baseUrl を設定するために必ずimport
+import { getHealth } from '@/client/sdk.gen'
+
+const res = await getHealth()
 ```
-
-## ワークフロー
-
-1. `internal/.../handler.go` に named function でハンドラを書く
-2. 関数の上に swag アノテーションを追加
-3. `swag init` で docs を再生成
-4. `http://localhost:8080/swagger/index.html` で確認
 
 ## よく使う @Param の書き方
 
@@ -65,3 +83,7 @@ cd backend && swag init
 ## WebSocket
 
 swag は WebSocket を正式サポートしていないのでアノテーションはスキップする。
+
+## Swagger UI
+
+`http://localhost:8080/swagger/index.html`
