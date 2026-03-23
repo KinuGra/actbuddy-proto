@@ -144,7 +144,10 @@ export function CalendarView({
   onUpdateStatus,
   onDelete,
 }: CalendarViewProps) {
-  const [dialogDate, setDialogDate] = useState<Date | null>(null)
+  const [dialogSlot, setDialogSlot] = useState<{
+    start: Date
+    end: Date
+  } | null>(null)
   const [selectedItem, setSelectedItem] = useState<ActionItem | null>(null)
 
   const calendarEvents = events.map(toCalendarEvent)
@@ -170,7 +173,7 @@ export function CalendarView({
   )
 
   const handleSelectSlot = useCallback((slot: SlotInfo) => {
-    setDialogDate(slot.start)
+    setDialogSlot({ start: slot.start, end: slot.end })
   }, [])
 
   const handleSelectEvent = useCallback((event: CalendarEvent) => {
@@ -216,16 +219,17 @@ export function CalendarView({
       />
 
       {/* 空スロットクリック → 追加ダイアログ */}
-      {dialogDate && (
+      {dialogSlot && (
         <AddActionItemDialog
-          selectedDate={dialogDate}
+          selectedDate={dialogSlot.start}
+          slotEnd={dialogSlot.end}
           onAdd={(item) => {
             onAddItem(item)
-            setDialogDate(null)
+            setDialogSlot(null)
           }}
           defaultOpen
           onOpenChange={(open) => {
-            if (!open) setDialogDate(null)
+            if (!open) setDialogSlot(null)
           }}
         />
       )}
