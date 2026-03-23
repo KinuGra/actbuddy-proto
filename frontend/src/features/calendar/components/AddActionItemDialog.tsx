@@ -22,15 +22,25 @@ interface AddActionItemDialogProps {
     description?: string
     startTime: Date
     endTime: Date
-    status: 'planned'
+    kind: string
+    status: 'not_started'
   }) => void
+  defaultOpen?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 export function AddActionItemDialog({
   selectedDate,
   onAdd,
+  defaultOpen = false,
+  onOpenChange,
 }: AddActionItemDialogProps) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(defaultOpen)
+
+  const handleOpenChange = (value: boolean) => {
+    setOpen(value)
+    onOpenChange?.(value)
+  }
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [startTime, setStartTime] = useState('09:00')
@@ -54,7 +64,8 @@ export function AddActionItemDialog({
       description: description || undefined,
       startTime: start,
       endTime: end,
-      status: 'planned',
+      kind: 'task',
+      status: 'not_started',
     })
 
     // リセット
@@ -62,11 +73,11 @@ export function AddActionItemDialog({
     setDescription('')
     setStartTime('09:00')
     setEndTime('10:00')
-    setOpen(false)
+    handleOpenChange(false)
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button>
           <Plus className="w-4 h-4 mr-2" />
