@@ -56,7 +56,7 @@ func (c *Client) readPump() {
 
 		// サーバーに保存
 		savedMessage := SavedMessage{
-            MessageID:  generateUniqueMessageID(), // 例: データベースからのID、またはUUIDなど
+      MessageID:  generateUniqueMessageID(), // 例: データベースからのID、またはUUIDなど
 			RoomID:     readMessage.RoomID,
 			SenderID:   readMessage.SenderID,
 			SenderName: "テストユーザー",
