@@ -10,6 +10,7 @@ export function useChat() {
   const sendMessage = useCallback((roomId: string, content: string) => {
     const newMessage: Message = {
       id: `m${Date.now()}`,
+      roomId: roomId,
       senderId: 'current',
       senderName: 'あなた',
       content,

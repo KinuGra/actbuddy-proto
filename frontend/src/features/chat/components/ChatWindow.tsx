@@ -57,13 +57,12 @@ export function ChatWindow({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (inputValue.trim()) {
-      const newMessage: Message = {
-        id: `m${Date.now()}`,
-        senderId: '3', //認証情報から取得
-        senderName: 'あなた', //認証情報から取得
+
+      // todo: 認証情報からsender_idを取得
+      const newMessage = {
+        room_id: 1,
+        sender_id: 1,
         content: inputValue.trim(),
-        timestamp: new Date(),
-        isRead: false,
       }
 
       // websocketでメッセージを送信
