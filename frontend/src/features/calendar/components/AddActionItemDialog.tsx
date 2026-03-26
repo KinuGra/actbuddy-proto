@@ -1,4 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import {
   Dialog,
   DialogContent,
@@ -13,34 +16,104 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Plus } from 'lucide-react'
+import { format } from 'date-fns'
+
+const schema = z
+  .object({
+    title: z.string().min(1, 'タイトルは必須です'),
+    description: z.string().optional(),
+    startTime: z
+      .string()
+      .regex(/^\d{2}:\d{2}$/, '時刻形式が正しくありません（HH:mm）'),
+    endTime: z
+      .string()
+      .regex(/^\d{2}:\d{2}$/, '時刻形式が正しくありません（HH:mm）'),
+  })
+  .refine((data) => data.startTime < data.endTime, {
+    message: '終了時刻は開始時刻より後にしてください',
+    path: ['endTime'],
+  })
+
+type FormValues = z.infer<typeof schema>
+
+function toTimeString(date: Date) {
+  return format(date, 'HH:mm')
+}
+
+function hasNonMidnightTime(date: Date) {
+  return date.getHours() !== 0 || date.getMinutes() !== 0
+}
 
 interface AddActionItemDialogProps {
   selectedDate: Date
+  slotEnd?: Date
   onAdd: (item: {
     userId: string
     title: string
     description?: string
     startTime: Date
     endTime: Date
-    status: 'planned'
+    kind: string
+    status: 'not_started'
   }) => void
+  defaultOpen?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 export function AddActionItemDialog({
   selectedDate,
+  slotEnd,
   onAdd,
+  defaultOpen = false,
+  onOpenChange,
 }: AddActionItemDialogProps) {
-  const [open, setOpen] = useState(false)
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [startTime, setStartTime] = useState('09:00')
-  const [endTime, setEndTime] = useState('10:00')
+  const [open, setOpen] = useState(defaultOpen)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const defaultStartTime = hasNonMidnightTime(selectedDate)
+    ? toTimeString(selectedDate)
+    : '09:00'
 
-    const [startHour, startMinute] = startTime.split(':').map(Number)
-    const [endHour, endMinute] = endTime.split(':').map(Number)
+  const defaultEndTime = slotEnd
+    ? toTimeString(slotEnd)
+    : hasNonMidnightTime(selectedDate)
+      ? toTimeString(new Date(selectedDate.getTime() + 60 * 60 * 1000))
+      : '10:00'
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      title: '',
+      description: '',
+      startTime: defaultStartTime,
+      endTime: defaultEndTime,
+    },
+  })
+
+  // スロット選択で開かれた場合、時刻のデフォルト値をリセット
+  useEffect(() => {
+    if (open) {
+      reset({
+        title: '',
+        description: '',
+        startTime: defaultStartTime,
+        endTime: defaultEndTime,
+      })
+    }
+  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleOpenChange = (value: boolean) => {
+    setOpen(value)
+    onOpenChange?.(value)
+  }
+
+  const onSubmit = (data: FormValues) => {
+    const [startHour, startMinute] = data.startTime.split(':').map(Number)
+    const [endHour, endMinute] = data.endTime.split(':').map(Number)
 
     const start = new Date(selectedDate)
     start.setHours(startHour, startMinute, 0, 0)
@@ -50,93 +123,100 @@ export function AddActionItemDialog({
 
     onAdd({
       userId: 'current',
-      title,
-      description: description || undefined,
+      title: data.title,
+      description: data.description || undefined,
       startTime: start,
       endTime: end,
-      status: 'planned',
+      kind: 'task',
+      status: 'not_started',
     })
 
-    // リセット
-    setTitle('')
-    setDescription('')
-    setStartTime('09:00')
-    setEndTime('10:00')
-    setOpen(false)
+    handleOpenChange(false)
+  }
+
+  const content = (
+    <DialogContent>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <DialogHeader>
+          <DialogTitle>新しいAction Item</DialogTitle>
+          <DialogDescription>
+            {format(selectedDate, 'yyyy年MM月dd日')} のタスクを登録しましょう
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="space-y-1">
+            <Label htmlFor="title">タイトル *</Label>
+            <Input
+              id="title"
+              placeholder="例: React学習"
+              {...register('title')}
+            />
+            {errors.title && (
+              <p className="text-xs text-destructive">{errors.title.message}</p>
+            )}
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="description">説明（任意）</Label>
+            <Textarea
+              id="description"
+              placeholder="例: Hooksの復習とカスタムフック作成"
+              rows={3}
+              {...register('description')}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label htmlFor="start-time">開始時刻</Label>
+              <Input id="start-time" type="time" {...register('startTime')} />
+              {errors.startTime && (
+                <p className="text-xs text-destructive">
+                  {errors.startTime.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="end-time">終了時刻</Label>
+              <Input id="end-time" type="time" {...register('endTime')} />
+              {errors.endTime && (
+                <p className="text-xs text-destructive">
+                  {errors.endTime.message}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => handleOpenChange(false)}
+          >
+            キャンセル
+          </Button>
+          <Button type="submit">追加</Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  )
+
+  // defaultOpen=true のとき（スロットクリックから開かれた場合）はトリガーボタン不要
+  if (defaultOpen) {
+    return (
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        {content}
+      </Dialog>
+    )
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button>
           <Plus className="w-4 h-4 mr-2" />
           Action Item追加
         </Button>
       </DialogTrigger>
-      <DialogContent>
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>新しいAction Item</DialogTitle>
-            <DialogDescription>今日やることを登録しましょう</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label htmlFor="title">タイトル *</Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="例: React学習"
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="description">説明（任意）</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="例: Hooksの復習とカスタムフック作成"
-                rows={3}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="start-time">開始時刻</Label>
-                <Input
-                  id="start-time"
-                  type="time"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="end-time">終了時刻</Label>
-                <Input
-                  id="end-time"
-                  type="time"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-            >
-              キャンセル
-            </Button>
-            <Button type="submit" disabled={!title}>
-              追加
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
+      {content}
     </Dialog>
   )
 }
