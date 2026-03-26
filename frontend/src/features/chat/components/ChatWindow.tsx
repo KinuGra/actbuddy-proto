@@ -44,7 +44,7 @@ export function ChatWindow({
     const ws = new WebSocket(wsURL)
     wsRef.current = ws
 
-    ws.onopen = () => console.log("Web socket opened")
+    ws.onopen = () => console.log('Web socket opened')
 
     // サーバーからのメッセージの取得
     ws.onmessage = (event) => {
