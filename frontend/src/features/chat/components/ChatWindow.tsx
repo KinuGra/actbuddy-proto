@@ -16,6 +16,7 @@ interface ChatWindowProps {
   participantName: string
   messages: Message[]
   onSendMessage: (content: string) => void
+  onReceiveMessage: (data: string) => void
   wsURL: string
 }
 
@@ -23,6 +24,7 @@ export function ChatWindow({
   participantName,
   messages,
   onSendMessage,
+  onReceiveMessage,
   wsURL,
 }: ChatWindowProps) {
   const [inputValue, setInputValue] = useState('')
@@ -46,7 +48,12 @@ export function ChatWindow({
 
     // サーバーからのメッセージの取得
     ws.onmessage = (event) => {
-      console.log('Received:', event.data)
+      console.log("Received:", event.data)
+      // 自分のメッセージの表示
+      onSendMessage(event.data);
+
+      // 他の人のメッセージの表示
+      onReceiveMessage(event.data);
     }
     ws.onclose = () => console.log('WebSocket disconnected')
 
@@ -67,7 +74,6 @@ export function ChatWindow({
 
       // websocketでメッセージを送信
       wsRef.current?.send(JSON.stringify(newMessage))
-      onSendMessage(inputValue)
       setInputValue('')
     }
   }
