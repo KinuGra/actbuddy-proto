@@ -29,9 +29,20 @@ const schema = z
       .string()
       .regex(/^\d{2}:\d{2}$/, '時刻形式が正しくありません（HH:mm）'),
   })
-  .refine((data) => data.startTime < data.endTime, {
-    message: '終了時刻は開始時刻より後にしてください',
-    path: ['endTime'],
+  .superRefine((data, ctx) => {
+    const [startHour, startMinute] = data.startTime.split(':').map(Number)
+    const [endHour, endMinute] = data.endTime.split(':').map(Number)
+
+    const startTotalMinutes = startHour * 60 + startMinute
+    const endTotalMinutes = endHour * 60 + endMinute
+
+    if (endTotalMinutes <= startTotalMinutes) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '終了時刻は開始時刻より後にしてください',
+        path: ['endTime'],
+      })
+    }
   })
 
 type FormValues = z.infer<typeof schema>
@@ -42,6 +53,18 @@ function toTimeString(date: Date) {
 
 function hasNonMidnightTime(date: Date) {
   return date.getHours() !== 0 || date.getMinutes() !== 0
+}
+
+function isSameDate(a: Date, b: Date) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  )
+}
+
+function toTotalMinutes(date: Date) {
+  return date.getHours() * 60 + date.getMinutes()
 }
 
 interface AddActionItemDialogProps {
@@ -73,11 +96,17 @@ export function AddActionItemDialog({
     ? toTimeString(selectedDate)
     : '09:00'
 
-  const defaultEndTime = slotEnd
-    ? toTimeString(slotEnd)
-    : hasNonMidnightTime(selectedDate)
-      ? toTimeString(new Date(selectedDate.getTime() + 60 * 60 * 1000))
-      : '10:00'
+  const fallbackEndTime = hasNonMidnightTime(selectedDate)
+    ? toTimeString(new Date(selectedDate.getTime() + 60 * 60 * 1000))
+    : '10:00'
+
+  const canUseSlotEndAsDefault =
+    !!slotEnd &&
+    isSameDate(selectedDate, slotEnd) &&
+    toTotalMinutes(slotEnd) > toTotalMinutes(selectedDate)
+
+  const defaultEndTime =
+    canUseSlotEndAsDefault && slotEnd ? toTimeString(slotEnd) : fallbackEndTime
 
   const {
     register,
