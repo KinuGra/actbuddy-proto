@@ -54,6 +54,43 @@ export function useChat() {
     }
   }, [])
 
+  const addMessage = useCallback((userId: string, data: string) => {
+    const msg = JSON.parse(data);
+    const content = msg.content;
+
+    if (userId == `${msg.sender_id}`) {
+      // 自分のメッセージをUIに反映
+      const newMessage: Message = {
+        id: msg.message_id,
+        roomId: msg.room_id,
+        senderId: 'current',
+        senderName: 'あなた',
+        content,
+        timestamp: new Date(),
+        isRead: false,
+      };
+      setMessages((prev) => ({
+        ...prev,
+        [msg.room_id]: [...(prev[msg.room_id] || []), newMessage],
+      }));
+    } else {
+      // 他のユーザーのメッセージをUIに反映
+      const receivedMessage: Message = {
+        id: `${msg.message_id}`,
+        roomId: msg.room_id,
+        senderId: msg.sender_id,
+        senderName: msg.sender_name,
+        content: msg.content,
+        timestamp: new Date(msg.created_at),
+        isRead: false,
+      };
+      setMessages((prev) => ({
+        ...prev,
+        [msg.room_id]: [...(prev[msg.room_id] || []), receivedMessage],
+      }));
+    }
+  }, []);
+
   const getMessages = useCallback(
     (roomId: string) => {
       return messages[roomId] || []
@@ -67,5 +104,6 @@ export function useChat() {
     sendMessage,
     getMessages,
     receiveMessage,
+    addMessage,
   }
 }

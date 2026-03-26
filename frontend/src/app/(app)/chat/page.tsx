@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { MessageSquare } from 'lucide-react'
 
 export default function Chat() {
-  const { chatRooms, sendMessage, getMessages, receiveMessage } = useChat()
+  const { chatRooms, sendMessage, getMessages, receiveMessage, addMessage } = useChat()
   const [selectedRoomId, setSelectedRoomId] = useState<string | undefined>(
     undefined
   )
@@ -49,8 +49,7 @@ export default function Chat() {
             <ChatWindow
               participantName={selectedRoom.participantName}
               messages={messages}
-              onSendMessage={(content) => sendMessage(selectedRoomId!, userId!, content)}
-              onReceiveMessage={(data) => receiveMessage(userId!, data)}
+              onAddMessage={(data) => addMessage(userId!, data)}
               wsURL={`ws://localhost:8081/ws?userId=${userId}`}
             />
           ) : (
