@@ -187,36 +187,40 @@ export function CalendarView({
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <Calendar<CalendarEvent>
-        localizer={localizer}
-        events={calendarEvents}
-        view={view as View}
-        date={date}
-        onView={(v) => onView(v as CalendarView)}
-        onNavigate={onNavigate}
-        onSelectSlot={handleSelectSlot}
-        onSelectEvent={handleSelectEvent}
-        selectable
-        eventPropGetter={eventPropGetter}
-        components={components}
-        style={{ flex: 1 }}
-        culture="ja"
-        messages={{
-          today: '今日',
-          previous: '前',
-          next: '次',
-          month: '月',
-          week: '週',
-          day: '日',
-          agenda: 'アジェンダ',
-          date: '日付',
-          time: '時間',
-          event: 'イベント',
-          noEventsInRange: 'この期間にイベントはありません',
-          showMore: (total) => `+${total}件`,
-        }}
-      />
+    <div className="flex flex-col h-full min-h-0">
+      <div className="flex-1 min-h-0">
+        <div className="h-[92%]">
+          <Calendar<CalendarEvent>
+            localizer={localizer}
+            events={calendarEvents}
+            view={view as View}
+            date={date}
+            onView={(v) => onView(v as CalendarView)}
+            onNavigate={onNavigate}
+            onSelectSlot={handleSelectSlot}
+            onSelectEvent={handleSelectEvent}
+            selectable
+            eventPropGetter={eventPropGetter}
+            components={components}
+            style={{ height: '100%', minHeight: 0 }}
+            culture="ja"
+            messages={{
+              today: '今日',
+              previous: '前',
+              next: '次',
+              month: '月',
+              week: '週',
+              day: '日',
+              agenda: 'アジェンダ',
+              date: '日付',
+              time: '時間',
+              event: 'イベント',
+              noEventsInRange: 'この期間にイベントはありません',
+              showMore: (total) => `+${total}件`,
+            }}
+          />
+        </div>
+      </div>
 
       {/* 空スロットクリック → 追加ダイアログ */}
       {dialogSlot && (
