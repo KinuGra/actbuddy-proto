@@ -8,6 +8,7 @@ import {
 } from 'react-big-calendar'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { localizer } from '../lib/calendarLocalizer'
+import { getEffectiveUserId } from '../lib/effectiveUserId'
 import {
   type ActionItem,
   type ActionItemStatus,
@@ -144,6 +145,7 @@ export function CalendarView({
   onUpdateStatus,
   onDelete,
 }: CalendarViewProps) {
+  const effectiveUserId = getEffectiveUserId()
   const [dialogSlot, setDialogSlot] = useState<{
     start: Date
     end: Date
@@ -157,11 +159,9 @@ export function CalendarView({
       style: {
         backgroundColor: statusColors[event.resource.status],
         opacity:
-          event.resource.userId !== process.env.NEXT_PUBLIC_CURRENT_USER_ID
-            ? 0.7
-            : 1,
+          event.resource.userId !== effectiveUserId ? 0.7 : 1,
         border:
-          event.resource.userId !== process.env.NEXT_PUBLIC_CURRENT_USER_ID
+          event.resource.userId !== effectiveUserId
             ? '2px dashed rgba(0,0,0,0.3)'
             : 'none',
         borderRadius: '4px',
@@ -169,7 +169,7 @@ export function CalendarView({
         fontSize: '0.75rem',
       },
     }),
-    []
+    [effectiveUserId]
   )
 
   const handleSelectSlot = useCallback((slot: SlotInfo) => {
@@ -260,9 +260,7 @@ export function CalendarView({
                 onDelete(id)
                 setSelectedItem(null)
               }}
-              isOwnItem={
-                selectedItem.userId === process.env.NEXT_PUBLIC_CURRENT_USER_ID
-              }
+              isOwnItem={selectedItem.userId === effectiveUserId}
             />
           )}
         </DialogContent>

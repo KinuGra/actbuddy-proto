@@ -8,8 +8,7 @@ import {
   deleteApiV1ActionItemsByUuid,
 } from '@/client/sdk.gen'
 import type { TaskActionItemResponse } from '@/client/types.gen'
-
-const USER_ID = process.env.NEXT_PUBLIC_CURRENT_USER_ID ?? ''
+import { getEffectiveUserId } from '../lib/effectiveUserId'
 
 function mapToActionItem(r: TaskActionItemResponse): ActionItem {
   return {
@@ -26,6 +25,7 @@ function mapToActionItem(r: TaskActionItemResponse): ActionItem {
 }
 
 export function useCalendar() {
+  const effectiveUserId = getEffectiveUserId()
   const [view, setView] = useState<CalendarView>('month')
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [actionItems, setActionItems] = useState<ActionItem[]>([])
@@ -33,11 +33,12 @@ export function useCalendar() {
   const [error, setError] = useState<string | null>(null)
 
   const fetchItems = useCallback(async () => {
-    if (!USER_ID) return
     setLoading(true)
     setError(null)
     try {
-      const res = await getApiV1ActionItems({ query: { user_id: USER_ID } })
+      const res = await getApiV1ActionItems({
+        query: { user_id: effectiveUserId },
+      })
       if (res.data) {
         const items = Object.values(res.data).flat()
         setActionItems(items.map(mapToActionItem))
@@ -47,7 +48,7 @@ export function useCalendar() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [effectiveUserId])
 
   useEffect(() => {
     fetchItems()
@@ -58,7 +59,7 @@ export function useCalendar() {
       try {
         await postApiV1ActionItems({
           body: {
-            user_id: USER_ID,
+            user_id: effectiveUserId,
             title: item.title,
             description: item.description,
             start_time: item.startTime.toISOString(),
@@ -74,7 +75,7 @@ export function useCalendar() {
         )
       }
     },
-    [fetchItems]
+    [effectiveUserId, fetchItems]
   )
 
   const updateActionItemStatus = useCallback(
