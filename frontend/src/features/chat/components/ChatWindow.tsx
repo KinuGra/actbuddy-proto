@@ -15,16 +15,14 @@ import { format } from 'date-fns'
 interface ChatWindowProps {
   participantName: string
   messages: Message[]
-  onSendMessage: (content: string) => void
-  onReceiveMessage: (data: string) => void
+  onAddMessage: (data: string) => void
   wsURL: string
 }
 
 export function ChatWindow({
   participantName,
   messages,
-  onSendMessage,
-  onReceiveMessage,
+  onAddMessage,
   wsURL,
 }: ChatWindowProps) {
   const [inputValue, setInputValue] = useState('')
@@ -49,11 +47,9 @@ export function ChatWindow({
     // サーバーからのメッセージの取得
     ws.onmessage = (event) => {
       console.log("Received:", event.data)
-      // 自分のメッセージの表示
-      onSendMessage(event.data);
 
-      // 他の人のメッセージの表示
-      onReceiveMessage(event.data);
+      // 自分または他人のメッセージの表示
+      onAddMessage(event.data);
     }
     ws.onclose = () => console.log('WebSocket disconnected')
 
