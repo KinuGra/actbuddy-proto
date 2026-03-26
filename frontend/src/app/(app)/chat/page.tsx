@@ -49,7 +49,7 @@ export default function Chat() {
             <ChatWindow
               participantName={selectedRoom.participantName}
               messages={messages}
-              onAddMessage={(data) => addMessage(selectedRoomId!, userId!, data)}
+              onAddMessage={(data) => addMessage(userId!, data)}
               wsURL={`ws://localhost:8081/ws?userId=${userId}`}
             />
           ) : (
