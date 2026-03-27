@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useRef, useEffect } from 'react'
 import { Message } from '../types/chat'
 import {
@@ -13,65 +15,50 @@ import { Send } from 'lucide-react'
 import { format } from 'date-fns'
 
 interface ChatWindowProps {
+  roomId: string
   participantName: string
   messages: Message[]
-  onAddMessage: (data: string) => void
+  onReceiveMessage: (data: string) => void
   wsURL: string
 }
 
 export function ChatWindow({
+  roomId,
   participantName,
   messages,
-  onAddMessage,
+  onReceiveMessage,
   wsURL,
 }: ChatWindowProps) {
   const [inputValue, setInputValue] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const wsRef = useRef<WebSocket | null>(null)
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
-
   useEffect(() => {
-    scrollToBottom()
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
   useEffect(() => {
-    //接続の開始
     const ws = new WebSocket(wsURL)
     wsRef.current = ws
 
-    ws.onopen = () => console.log('Web socket opened')
-
-    // サーバーからのメッセージの取得
-    ws.onmessage = (event) => {
-      console.log("Received:", event.data)
-
-      // 自分または他人のメッセージの表示
-      onAddMessage(event.data);
-    }
+    ws.onopen = () => console.log('WebSocket opened')
+    ws.onmessage = (event) => onReceiveMessage(event.data)
     ws.onclose = () => console.log('WebSocket disconnected')
 
     return () => ws.close()
   }, [wsURL])
 
-  // サーバーへメッセージを送る
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (inputValue.trim()) {
+    if (!inputValue.trim() || !wsRef.current) return
 
-      // todo: 認証情報からsender_idを取得
-      const newMessage = {
-        room_id: 1,
-        sender_id: 1,
+    wsRef.current.send(
+      JSON.stringify({
+        room_id: roomId,
         content: inputValue.trim(),
-      }
-
-      // websocketでメッセージを送信
-      wsRef.current?.send(JSON.stringify(newMessage))
-      setInputValue('')
-    }
+      }),
+    )
+    setInputValue('')
   }
 
   return (
@@ -92,6 +79,9 @@ export function ChatWindow({
                   isOwn ? 'bg-primary text-primary-foreground' : 'bg-muted'
                 }`}
               >
+                {!isOwn && (
+                  <p className="text-xs font-semibold mb-1">{message.senderName}</p>
+                )}
                 <p className="text-sm break-words">{message.content}</p>
                 <span
                   className={`text-xs mt-1 block ${isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}
