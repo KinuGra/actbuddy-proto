@@ -29,6 +29,18 @@ docker compose up
 docker compose down
 ```
 
+## データベースの起動
+### migrateでテーブルを作る
+```bash
+docker compose exec backend sh -c "migrate -path ./db/migrations -database \$DATABASE_URL up"
+```
+
+### dummyデータをセットする
+```bash
+cd backend
+docker compose exec -T postgres psql -U postgres -d actbuddy < db/seed/seed.sql
+```
+
 ### 完全リセット（DBボリュームも削除）
 
 ```bash
