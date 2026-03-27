@@ -23,8 +23,9 @@ import {
   X,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { currentUser } from '@/features/users/mocks/mockUsers'
 import { mockChatRooms } from '@/features/chat/mocks/mockMessages'
+import { useCurrentUser } from '@/features/auth/hooks/useCurrentUser'
+import { useRouter } from 'next/navigation'
 
 interface NavItem {
   href: string
@@ -52,8 +53,21 @@ const NAV_ITEMS: NavItem[] = [
 
 const MOCK_NOTIFICATION_COUNT = 3
 
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080'
+
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const router = useRouter()
+  const currentUser = useCurrentUser()
+
+  const handleLogout = async () => {
+    await fetch(`${API_BASE_URL}/api/auth/logout`, {
+      method: 'POST',
+      credentials: 'include',
+    })
+    router.push('/login')
+  }
 
   // 未読メッセージ合計を計算
   const totalUnreadMessages = mockChatRooms.reduce(
@@ -132,11 +146,11 @@ export function Header() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-bold hover:opacity-80 transition-opacity">
-                    {currentUser.name.charAt(0)}
+                    {currentUser?.display_name.charAt(0) ?? '?'}
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>{currentUser.name}</DropdownMenuLabel>
+                  <DropdownMenuLabel>{currentUser?.display_name ?? ''}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
                     <UserCircle className="w-4 h-4 mr-2" />
@@ -147,7 +161,10 @@ export function Header() {
                     設定
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-red-600">
+                  <DropdownMenuItem
+                    className="text-red-600"
+                    onClick={handleLogout}
+                  >
                     <LogOut className="w-4 h-4 mr-2" />
                     ログアウト
                   </DropdownMenuItem>
