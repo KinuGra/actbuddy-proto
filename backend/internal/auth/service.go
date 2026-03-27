@@ -76,6 +76,34 @@ func (s *Service) Signup(ctx context.Context, req SignupRequest) (*UserResponse,
 	return toUserResponse(user), token, nil
 }
 
+// ログイン
+
+func (s *Service) Login(ctx context.Context, req LoginRequest) (*UserResponse, string, error) {
+	// 1. メールでユーザーを検索
+	user, err := s.repo.GetUserByEmail(ctx, req.Email)
+	if err != nil {
+		if errors.Is(err, ErrUserNotFound) {
+			return nil, "", ErrInvalidCredentials
+		}
+		return nil, "", err
+	}
+
+	// 2. パスワードを照合
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password))
+	if err != nil {
+		return nil, "", ErrInvalidCredentials
+	}
+
+	// 3. セッション作成
+	token, err := s.createSession(ctx, user.ID)
+	if err != nil {
+		return nil, "", err
+	}
+
+	// 4. レスポンスを返す
+	return toUserResponse(user), token, nil
+}
+
 // ログアウト
 
 func (s *Service) Logout(ctx context.Context, token string) error {
@@ -91,7 +119,7 @@ func (s *Service) GetCurrentUser(ctx context.Context, token string) (*UserRespon
 		return nil, err
 	}
 
-	// ユーザー情報を取得
+	// 2. ユーザー情報を取得
 	user, err := s.repo.GetUserByID(ctx, session.UserID)
 	if err != nil {
 		return nil, err
