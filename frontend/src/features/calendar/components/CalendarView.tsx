@@ -45,10 +45,10 @@ function toCalendarEvent(item: ActionItem): CalendarEvent {
 }
 
 const statusColors: Record<ActionItemStatus, string> = {
-  not_started: '#3b82f6',
-  completed: '#22c55e',
-  progress_70: '#4ade80',
-  progress_30: '#eab308',
+  not_started: '#2563eb', // blue-600
+  completed: '#16a34a',   // green-600
+  progress_70: '#0d9488', // teal-600
+  progress_30: '#f97316', // orange-500
 }
 
 const BREAK_COLOR = '#94a3b8'
