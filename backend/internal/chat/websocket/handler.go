@@ -9,7 +9,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/websocket"
-	"strconv"
 )
 
 // upgrader: HTTP to websocket
@@ -33,13 +32,10 @@ var upgrader = websocket.Upgrader{
 
 // upgrade HTTP to websocket and register client to hub
 func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
-	userIDStr := r.URL.Query().Get("userId")
+	userID := r.URL.Query().Get("userId")
 
-	userID, err := strconv.ParseInt(userIDStr, 10, 64)
-	if err != nil {
-		log.Println("invalid userId:", err)
-		return
-	}
+	log.Println("ServeWs userid: %s", userID)
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 
 	if err != nil {

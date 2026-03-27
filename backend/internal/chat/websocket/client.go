@@ -8,28 +8,28 @@ import (
 )
 
 type Client struct {
-	id   int64
+	id   string
 	hub  *Hub
 	conn *websocket.Conn
 	send chan []byte
 }
 
 type ReadMessage struct {
-	RoomID   int64  `json:"room_id"`
-	SenderID int64  `json:"sender_id"`
+	RoomID   string  `json:"room_id"`
+	SenderID string  `json:"sender_id"`
 	Content  string `json:"content"`
 }
 
 type SavedMessage struct {
-	MessageID  int64     `json:"message_id"`
-	RoomID     int64     `json:"room_id"`
-	SenderID   int64     `json:"sender_id"`
+	MessageID  string     `json:"message_id"`
+	RoomID     string     `json:"room_id"`
+	SenderID   string     `json:"sender_id"`
 	SenderName string    `json:"sender_name"`
 	Content    string    `json:"content"`
 	CreatedAt  time.Time `json:"created_at"`
 }
 
-func NewClient(id int64, hub *Hub, conn *websocket.Conn, send chan []byte) *Client {
+func NewClient(id string, hub *Hub, conn *websocket.Conn, send chan []byte) *Client {
 	return &Client{id: id, hub: hub, conn: conn, send: send}
 }
 
@@ -56,7 +56,7 @@ func (c *Client) readPump() {
 
 		// サーバーに保存
 		savedMessage := SavedMessage{
-      MessageID:  100, // 例: データベースからのID、またはUUIDなど
+      MessageID:  "100", // 例: データベースからのID、またはUUIDなど
 			RoomID:     readMessage.RoomID,
 			SenderID:   readMessage.SenderID,
 			SenderName: "テストユーザー",
@@ -64,7 +64,7 @@ func (c *Client) readPump() {
 			CreatedAt:  time.Date(2026, 3, 14, 12, 0, 0, 0, time.UTC),
 		}
 		// サーバーから返ってきたデータをbroadcast
-		log.Printf("Saved Message at DB as message_id :%d, room_id %d, sender_id %d, sender_name %s, content : %s, created_at : %v", savedMessage.MessageID, savedMessage.RoomID, savedMessage.SenderID, savedMessage.SenderName, savedMessage.Content, savedMessage.CreatedAt)
+		log.Printf("Saved Message at DB as message_id :%s, room_id %s, sender_id %s, sender_name %s, content : %s, created_at : %v", savedMessage.MessageID, savedMessage.RoomID, savedMessage.SenderID, savedMessage.SenderName, savedMessage.Content, savedMessage.CreatedAt)
 		c.hub.broadcast <- &savedMessage
 	}
 }

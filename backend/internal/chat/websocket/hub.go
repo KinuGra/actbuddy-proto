@@ -6,7 +6,7 @@ import (
 )
 
 type Hub struct {
-	rooms      map[int64]map[*Client]bool
+	rooms      map[string]map[*Client]bool
 	broadcast  chan *SavedMessage
 	register   chan *Client
 	unregister chan *Client
@@ -14,21 +14,21 @@ type Hub struct {
 
 func NewHub() *Hub {
 	return &Hub{
-		rooms:      make(map[int64]map[*Client]bool),
+		rooms:      make(map[string]map[*Client]bool),
 		broadcast:  make(chan *SavedMessage),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 	}
 }
 
-func getRoomsByID(id int64) []int64 {
+func getRoomsByID(id string) []string {
 	return testRooms[id]
 }
 
-var testRooms = map[int64][]int64{
-	1: {1, 2},
-	2: {1},
-	3: {2},
+var testRooms = map[string][]string{
+	"11111111-1111-1111-1111-111111111111": {"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"},
+	"22222222-2222-2222-2222-222222222222": {"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"},
+	"33333333-3333-3333-3333-333333333333": {"bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"},
 }
 
 func (h *Hub) Run() {
@@ -36,6 +36,10 @@ func (h *Hub) Run() {
 		select {
 		case client := <-h.register:
 			// このクライアントがどのルームに所属しているかサーバーに聞く
+			log.Printf(
+				"client.id %s",
+				client.id,
+			)
 			roomIDs := getRoomsByID(client.id)
 
 			for _, roomID := range roomIDs {
@@ -63,7 +67,7 @@ func (h *Hub) Run() {
 
 		case savedMessage := <-h.broadcast:
 			log.Printf(
-				"Broadcasting message to room %d: %s",
+				"Broadcasting message to room %s: %s",
 				savedMessage.RoomID,
 				savedMessage.Content,
 			)
@@ -74,12 +78,14 @@ func (h *Hub) Run() {
 				continue
 			}
 
+			log.Println(h.rooms) 
+
 			if clients, ok := h.rooms[savedMessage.RoomID]; ok {
 				for client := range clients {
 					select {
 					case client.send <- data:
 						log.Printf(
-							"Sent message to client: %v, Client %d",
+							"Sent message to client: %v, Client %s",
 							client.conn.RemoteAddr(), client.id,
 						)
 

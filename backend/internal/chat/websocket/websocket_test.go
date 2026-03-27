@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
-	"strconv"
 	"testing"
 	"time"
 
@@ -24,7 +23,7 @@ func TestServeWsSingleClient(t *testing.T) {
 	defer server.Close()
 
 	// WebSocket URL
-	wsURL := "ws" + server.URL[len("http"):] + "/ws" + "?userId=1"
+	wsURL := "ws" + server.URL[len("http"):] + "/ws" + "?userId=11111111-1111-1111-1111-111111111111"
 
 	// WebSocket 接続
 	ws, resp, err := websocket.DefaultDialer.Dial(wsURL, nil)
@@ -38,8 +37,8 @@ func TestServeWsSingleClient(t *testing.T) {
 
 	// メッセージ送信
 	msg := ReadMessage{
-		RoomID:   1,
-		SenderID: 10,
+		RoomID:   "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+		SenderID: "11111111-1111-1111-1111-111111111111",
 		Content:  "hello room 1",
 	}
 
@@ -66,9 +65,9 @@ func TestServeWsSingleClient(t *testing.T) {
 	fixedTime := time.Date(2026, 3, 14, 12, 0, 0, 0, time.UTC)
 
 	expected := SavedMessage{
-		MessageID:  100,
-		RoomID:     1,
-		SenderID:   10,
+		MessageID:  "100",
+		RoomID:   "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+		SenderID: "11111111-1111-1111-1111-111111111111",
 		SenderName: "テストユーザー",
 		Content:    "hello room 1",
 		CreatedAt:  fixedTime,
@@ -91,14 +90,20 @@ func TestServeWsThreeClients(t *testing.T) {
 	}))
 	defer server.Close()
 
-	getWsURL := func(userID int) string {
-		return "ws" + server.URL[len("http"):] + "/ws?userId=" + strconv.Itoa(userID)
+	getWsURL := func(userID string) string {
+		return "ws" + server.URL[len("http"):] + "/ws?userId=" + userID
+	}
+
+	userIDs := []string{
+    "11111111-1111-1111-1111-111111111111",
+    "22222222-2222-2222-2222-222222222222",
+    "33333333-3333-3333-3333-333333333333",
 	}
 
 	// 3人のクライアントを接続
 	clients := make([]*websocket.Conn, 3)
 	for i := 0; i < 3; i++ {
-		ws, resp, err := websocket.DefaultDialer.Dial(getWsURL(i+1), nil)
+		ws, resp, err := websocket.DefaultDialer.Dial(getWsURL(userIDs[i]), nil)
 		if err != nil {
 			if resp != nil {
 				t.Fatalf("Dial error: %v (status=%d)", err, resp.StatusCode)
@@ -111,8 +116,8 @@ func TestServeWsThreeClients(t *testing.T) {
 
 	// 1人目がメッセージ送信
 	msg := ReadMessage{
-		RoomID:   1,
-		SenderID: 1,
+		RoomID:   "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+		SenderID: "11111111-1111-1111-1111-111111111111",
 		Content:  "hello everyone at room1",
 	}
 	data, _ := json.Marshal(msg)
