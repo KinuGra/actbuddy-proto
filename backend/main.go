@@ -7,33 +7,45 @@
 package main
 
 import (
-	_ "backend/docs"
 	"database/sql"
 	"log"
 	"net/http"
 	"os"
 
+	_ "backend/docs"
+
+	"backend/internal/auth"
 	"backend/internal/chat/websocket"
 	"backend/internal/task"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func main() {
+	// DB接続
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatalf("failed to open db: %v", err)
 	}
 	defer db.Close()
 
+	// *sql.DBをsqlx.DBにラップ（authで使用）
+	sqlxDB := sqlx.NewDb(db, "postgres")
+
+	// 依存関係の組み立て（DI）
+	authRepo := auth.NewPostgresRepository(sqlxDB)
+	authService := auth.NewService(authRepo)
+	authHandler := auth.NewHandler(authService)
 	taskRepo := task.NewPostgresRepository(db)
 	taskSvc := task.NewService(taskRepo)
 	taskHandler := task.NewHandler(taskSvc)
 
+	// Ginルーター
 	r := gin.Default()
 
 	// 開発中はNext(3000)から叩くのでCORS許可
@@ -44,6 +56,21 @@ func main() {
 	}))
 
 	r.GET("/health", healthHandler)
+
+	// 認証不要
+	public := r.Group("/api/auth")
+	{
+		public.POST("/signup", authHandler.Signup)
+		public.POST("/login", authHandler.Login)
+	}
+
+	// 認証必要
+	protected := r.Group("/api")
+	protected.Use(auth.AuthMiddleware(authService))
+	{
+		protected.POST("/auth/logout", authHandler.Logout)
+		protected.GET("/auth/me", authHandler.Me)
+	}
 
 	hub := websocket.NewHub()
 	go hub.Run()
