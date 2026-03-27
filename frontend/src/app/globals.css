@@ -124,3 +124,22 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* react-big-calendar 現在時刻インジケーター */
+.rbc-current-time-indicator {
+  height: 3px;
+  background-color: #ef4444;
+  opacity: 1;
+}
+
+.rbc-current-time-indicator::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background-color: #ef4444;
+}

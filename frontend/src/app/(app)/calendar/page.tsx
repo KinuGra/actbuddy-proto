@@ -1,6 +1,14 @@
 'use client'
+import dynamic from 'next/dynamic'
 import { useCalendar } from '@/features/calendar/hooks/useCalendar'
-import { CalendarView } from '@/features/calendar/components/CalendarView'
+
+const CalendarView = dynamic(
+  () =>
+    import('@/features/calendar/components/CalendarView').then(
+      (m) => m.CalendarView
+    ),
+  { ssr: false }
+)
 
 export default function Calendar() {
   const {
