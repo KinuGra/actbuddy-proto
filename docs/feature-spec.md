@@ -122,21 +122,21 @@
 
 | メソッド | パス | 説明 |
 |---|---|---|
-| POST | `/api/v1/action-items` | 作成 |
-| GET | `/api/v1/action-items?user_id={uuid}` | 一覧取得 |
+| POST | `/api/v1/action-items` | 作成（認証必須・user_idはセッションから取得） |
+| GET | `/api/v1/action-items` | 自分のアイテム一覧取得（認証必須） |
+| GET | `/api/v1/action-items?target_user_id={uuid}` | バディ/フレンドのアイテム一覧取得（権限チェックあり） |
 | GET | `/api/v1/action-items/{uuid}` | 1件取得 |
 | PUT | `/api/v1/action-items/{uuid}` | 更新 |
 | DELETE | `/api/v1/action-items/{uuid}` | 削除 |
 
 ### 未実装・TODO
 
-- [ ] `user_id` に外部キー制約を追加（migration 000003）
-- [ ] `kind = 'break'` のフロント表示対応（色分け、チェックなし）
-- [ ] バディ・フレンドの Action Item を取得するAPI
-  - `GET /api/v1/action-items?user_id={uuid}` にバディ権限チェックを追加
-- [ ] カレンダー上でのステータス変更UI（タップ1〜2操作で完結）
-- [ ] 月・週・日ビュー切り替え
-- [ ] バディのAction Itemをカレンダーに重ねて表示
+- [x] `user_id` に外部キー制約を追加（migration 000003）
+- [x] `kind = 'break'` のフロント表示対応（色分け、ステータス変更UI非表示）
+- [x] バディ・フレンドの Action Item を取得するAPI（`FindByUserIDAsPartner` でbuddy/friend_relationships JOIN）
+- [x] カレンダー上でのステータス変更UI（肯定的文言：「だいぶできた」等）
+- [x] 月・週・日ビュー切り替え
+- [x] バディのAction Itemをカレンダーに重ねて表示（トグルフィルターUI）
 
 ---
 
