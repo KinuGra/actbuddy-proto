@@ -15,6 +15,7 @@ import (
 	_ "backend/docs"
 
 	"backend/internal/auth"
+	"backend/internal/buddy"
 	"backend/internal/chat/websocket"
 	"backend/internal/task"
 
@@ -45,6 +46,11 @@ func main() {
 	taskSvc := task.NewService(taskRepo)
 	taskHandler := task.NewHandler(taskSvc)
 
+	buddyRepo := buddy.NewPostgresRepository(db)
+	buddySvc := buddy.NewService(buddyRepo)
+	buddyHandler := buddy.NewHandler(buddySvc)
+	buddy.StartMatchingJob(buddySvc)
+
 	// Ginルーター
 	r := gin.Default()
 
@@ -71,6 +77,19 @@ func main() {
 	{
 		protected.POST("/auth/logout", authHandler.Logout)
 		protected.GET("/auth/me", authHandler.Me)
+
+		// バディ
+		buddyGroup := protected.Group("/buddy")
+		{
+			buddyGroup.GET("/profile", buddyHandler.GetProfile)
+			buddyGroup.PUT("/profile", buddyHandler.UpsertProfile)
+			buddyGroup.GET("/queue", buddyHandler.GetQueueStatus)
+			buddyGroup.POST("/queue", buddyHandler.JoinQueue)
+			buddyGroup.DELETE("/queue", buddyHandler.LeaveQueue)
+			buddyGroup.GET("/relationships", buddyHandler.GetRelationships)
+			buddyGroup.DELETE("/relationships/:id", buddyHandler.EndRelationship)
+			buddyGroup.GET("/capacity", buddyHandler.GetCapacity)
+		}
 	}
 
 	hub := websocket.NewHub()

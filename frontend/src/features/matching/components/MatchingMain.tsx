@@ -1,148 +1,227 @@
 'use client'
 
-// マッチング画面のメインUI（Next.js用）
-// 既存React実装を忠実に移植。App Router(Server Component)で動作。
-// マッチング状態管理やバディ候補表示などを担当
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Users, Clock, CheckCircle, UserX } from 'lucide-react'
 import { useMatching } from '../hooks/useMatching'
-import { MatchingCard } from './MatchingCard'
-import { MatchingStatusDisplay } from './MatchingStatus'
-import { Users, Info, CheckCircle } from 'lucide-react'
-import { currentUser } from '../../users/mocks/mockUsers'
+import { useBuddyProfile } from '../hooks/useBuddyProfile'
+import { BuddyProfileForm } from './BuddyProfileForm'
 
 export default function MatchingMain() {
-  // useMatching: マッチング状態管理用カスタムフック
-  const {
-    matchingState,
-    startMatching,
-    cancelMatching,
-    acceptMatch,
-    rejectMatch,
-  } = useMatching()
+  const router = useRouter()
+  const { profile, loading: profileLoading, upsertProfile } = useBuddyProfile()
+  const { queueStatus, relationships, capacity, loading: matchLoading, joinQueue, leaveQueue, endRelationship } =
+    useMatching()
+
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [showProfileForm, setShowProfileForm] = useState(false)
+
+  const loading = profileLoading || matchLoading
+
+  const handleJoinQueue = async () => {
+    setActionError(null)
+    try {
+      await joinQueue()
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'エラーが発生しました')
+    }
+  }
+
+  const handleLeaveQueue = async () => {
+    setActionError(null)
+    try {
+      await leaveQueue()
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'エラーが発生しました')
+    }
+  }
+
+  const handleEndRelationship = async (id: string) => {
+    if (!confirm('バディ関係を終了しますか？')) return
+    try {
+      await endRelationship(id)
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'エラーが発生しました')
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center text-muted-foreground">
+        読み込み中...
+      </div>
+    )
+  }
+
+  const inQueue = queueStatus?.in_queue && queueStatus.status === 'waiting'
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* ページヘッダー */}
-      <div className="text-center mb-8">
+    <div className="container mx-auto px-4 py-8 space-y-8">
+      <div className="text-center">
         <h1 className="text-3xl font-bold mb-2">バディを探す</h1>
-        <p className="text-muted-foreground">
-          あなたに最適なバディをマッチングします
-        </p>
+        <p className="text-muted-foreground">目標や活動時間が近い人と自動でマッチングします</p>
       </div>
-      {/* バディ情報カード */}
-      <Card className="mb-8 max-w-2xl mx-auto">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Info className="w-5 h-5" />
-            バディについて
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-start gap-3">
-            <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
-            <div>
-              <p className="font-semibold">マッチング後1週間の期間</p>
-              <p className="text-sm text-muted-foreground">
-                1週間のバディ期間中、互いのAction itemを共有し、もくもく会を実施
+
+      {actionError && (
+        <div className="max-w-2xl mx-auto bg-destructive/10 text-destructive rounded-md px-4 py-3 text-sm">
+          {actionError}
+        </div>
+      )}
+
+      {/* バディ上限 */}
+      {capacity && (
+        <Card className="max-w-2xl mx-auto">
+          <CardContent className="flex items-center justify-between py-4">
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-primary" />
+              <span className="font-medium">現在のバディ数</span>
+            </div>
+            <div className="text-right">
+              <span className="text-2xl font-bold">{capacity.current_count}</span>
+              <span className="text-muted-foreground"> / {capacity.max_count} 人</span>
+              <p className="text-xs text-muted-foreground">
+                達成率 {Math.round(capacity.achievement_rate * 100)}%
               </p>
             </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
-            <div>
-              <p className="font-semibold">同時にバディになれる人数</p>
-              <p className="text-sm text-muted-foreground">
-                現在{' '}
-                <span className="font-bold text-primary">
-                  {currentUser.buddyCount}人
-                </span>{' '}
-                まで（達成率が上がると増えます）
-              </p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
-            <div>
-              <p className="font-semibold">マッチングアルゴリズム</p>
-              <p className="text-sm text-muted-foreground">
-                目標、趣味、興味が近い人を自動でマッチング
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      {/* マッチング状態表示 */}
-      {matchingState.status === 'idle' && (
-        <div className="max-w-2xl mx-auto">
+          </CardContent>
+        </Card>
+      )}
+
+      {/* プロフィール設定 */}
+      <div className="max-w-2xl mx-auto">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold">プロフィール</h2>
+          <Button variant="outline" size="sm" onClick={() => setShowProfileForm((v) => !v)}>
+            {showProfileForm ? '閉じる' : profile ? '編集' : '設定する'}
+          </Button>
+        </div>
+
+        {!profile && !showProfileForm && (
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16 space-y-4">
-              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center">
-                <Users className="w-10 h-10 text-primary" />
-              </div>
-              <h2 className="text-2xl font-semibold">バディを探しましょう</h2>
-              <p className="text-muted-foreground text-center max-w-md">
-                ボタンを押すと、あなたの目標や興味に合ったバディを自動でマッチングします
-              </p>
-              <Button size="lg" onClick={startMatching} className="mt-4">
-                <Users className="mr-2 h-5 w-5" />
-                マッチングを開始
-              </Button>
+            <CardContent className="py-6 text-center text-muted-foreground text-sm">
+              マッチングに参加するにはプロフィールを設定してください
             </CardContent>
           </Card>
-        </div>
-      )}
-      {matchingState.status === 'searching' && (
-        <div className="space-y-4">
-          <MatchingStatusDisplay status={matchingState.status} />
-          <div className="text-center">
-            <Button variant="outline" onClick={cancelMatching}>
-              キャンセル
-            </Button>
-          </div>
-        </div>
-      )}
-      {matchingState.status === 'matched' && matchingState.matchedUser && (
-        <div className="space-y-4">
-          <MatchingStatusDisplay status={matchingState.status} />
-          <MatchingCard
-            user={matchingState.matchedUser}
-            onAccept={acceptMatch}
-            onReject={rejectMatch}
+        )}
+
+        {profile && !showProfileForm && (
+          <Card>
+            <CardContent className="py-4 space-y-3">
+              {profile.bio && <p className="text-sm">{profile.bio}</p>}
+              <div className="flex flex-wrap gap-1">
+                {profile.goal_types.map((g) => (
+                  <Badge key={g} variant="default">{g}</Badge>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {profile.active_times.map((t) => (
+                  <Badge key={t} variant="secondary">{t}</Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {showProfileForm && (
+          <BuddyProfileForm
+            initialProfile={profile}
+            onSave={async (req) => {
+              await upsertProfile(req)
+              setShowProfileForm(false)
+            }}
           />
-        </div>
-      )}
-      {matchingState.status === 'in-buddy' && matchingState.matchedUser && (
+        )}
+      </div>
+
+      {/* キュー操作 */}
+      {profile && (
         <div className="max-w-2xl mx-auto">
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16 space-y-4">
-              <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center">
-                <CheckCircle className="w-10 h-10 text-green-500" />
-              </div>
-              <h2 className="text-2xl font-semibold">バディになりました！</h2>
-              <p className="text-muted-foreground text-center max-w-md">
-                {matchingState.matchedUser.name}
-                さんとのバディ関係が開始されました。
-                <br />
-                これから1週間、一緒に頑張りましょう！
-              </p>
-              <div className="flex gap-4 mt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => (window.location.href = '/')}
-                >
-                  ホームに戻る
-                </Button>
-                <Button>チャットを開始</Button>
-              </div>
+            <CardContent className="flex flex-col items-center py-8 space-y-4">
+              {inQueue ? (
+                <>
+                  <div className="flex items-center gap-2 text-primary">
+                    <Clock className="w-6 h-6 animate-pulse" />
+                    <span className="font-semibold text-lg">マッチング待機中</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground text-center">
+                    バディが見つかると通知でお知らせします
+                    {queueStatus?.expires_at && (
+                      <span className="block">
+                        有効期限: {new Date(queueStatus.expires_at).toLocaleDateString('ja-JP')}
+                      </span>
+                    )}
+                  </p>
+                  <Button variant="outline" onClick={handleLeaveQueue}>
+                    キャンセル
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                    <Users className="w-8 h-8 text-primary" />
+                  </div>
+                  <p className="text-sm text-muted-foreground text-center max-w-xs">
+                    マッチングキューに参加すると、1時間ごとに自動でバディを探します
+                  </p>
+                  <Button
+                    onClick={handleJoinQueue}
+                    disabled={!capacity || capacity.current_count >= capacity.max_count}
+                  >
+                    マッチングに参加する
+                  </Button>
+                  {capacity && capacity.current_count >= capacity.max_count && (
+                    <p className="text-xs text-muted-foreground">バディの上限数に達しています</p>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {/* アクティブなバディ一覧 */}
+      {relationships.length > 0 && (
+        <div className="max-w-2xl mx-auto space-y-3">
+          <h2 className="text-lg font-semibold">現在のバディ</h2>
+          {relationships.map((rel) => (
+            <Card key={rel.id}>
+              <CardContent className="flex items-center justify-between py-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-semibold text-primary">
+                    {rel.partner.display_name.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="font-medium">{rel.partner.display_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      終了: {new Date(rel.ends_at).toLocaleDateString('ja-JP')}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => router.push(`/chat?room=${rel.room_id}`)}
+                  >
+                    <CheckCircle className="w-4 h-4 mr-1" />
+                    チャット
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => handleEndRelationship(rel.id)}
+                  >
+                    <UserX className="w-4 h-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
     </div>
