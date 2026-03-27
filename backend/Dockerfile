@@ -12,5 +12,5 @@ RUN go install github.com/air-verse/air@latest
 # golang-migrate CLI
 RUN go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
-EXPOSE 8081
+EXPOSE 8080
 CMD ["air", "-c", ".air.toml"]
