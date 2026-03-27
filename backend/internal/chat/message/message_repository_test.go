@@ -2,75 +2,82 @@ package message
 
 import (
 	"context"
-	"github.com/DATA-DOG/go-sqlmock"
-	"reflect"
 	"testing"
 	"time"
+
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/google/uuid"
 )
 
-func TestSendMessage(t *testing.T) {
+func TestSaveMessage(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("sqlmock error: %s", err)
 	}
 	defer db.Close()
 
 	repo := NewPostgresRepository(db)
 
-	mock.ExpectQuery(`INSERT INTO messages.*RETURNING message_id`).
-		WithArgs(int64(1), int64(2), "hello").
-		WillReturnRows(sqlmock.NewRows([]string{"message_id"}).AddRow(123))
+	roomID := uuid.New()
+	senderID := uuid.New()
+	fixedTime := time.Date(2026, 3, 14, 12, 0, 0, 0, time.UTC)
 
-	id, err := repo.SendMessage(context.Background(), 1, 2, "hello")
+	mock.ExpectQuery(`INSERT INTO messages`).
+		WithArgs(roomID, senderID, "hello").
+		WillReturnRows(sqlmock.NewRows([]string{"id", "room_id", "sender_id", "content", "created_at"}).
+			AddRow(int64(123), roomID, senderID, "hello", fixedTime))
+
+	msg, err := repo.SaveMessage(context.Background(), roomID, senderID, "hello")
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
-	if id != 123 {
-		t.Errorf("expected id 123, got %d", id)
+
+	if msg.ID != 123 {
+		t.Errorf("expected ID 123, got %d", msg.ID)
+	}
+	if msg.Content != "hello" {
+		t.Errorf("expected content 'hello', got %s", msg.Content)
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %v", err)
+		t.Errorf("unfulfilled expectations: %v", err)
 	}
 }
 
-func TestGetMessageByRoomID(t *testing.T) {
+func TestGetMessagesByRoomID(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		t.Fatalf("sqlmock error: %s", err)
 	}
 	defer db.Close()
 
 	repo := NewPostgresRepository(db)
 
+	roomID := uuid.New()
+	senderID1 := uuid.New()
+	senderID2 := uuid.New()
 	fixedTime := time.Date(2026, 3, 14, 12, 0, 0, 0, time.UTC)
 
-	mock.ExpectQuery(`SELECT message_id, room_id, messenger_id, message, created_at FROM messages WHERE room_id = \$1`).
-		WithArgs(int64(1)).
-		WillReturnRows(sqlmock.NewRows([]string{"message_id", "room_id", "messenger_id", "message", "created_at"}).
-			AddRow(1, 1, 2, "hello", fixedTime).
-			AddRow(2, 1, 3, "hi", fixedTime),
-		)
+	mock.ExpectQuery(`SELECT m.id`).
+		WithArgs(roomID, 100).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "room_id", "sender_id", "sender_name", "content", "created_at"}).
+			AddRow(int64(1), roomID, senderID1, "ユーザーA", "hello", fixedTime).
+			AddRow(int64(2), roomID, senderID2, "ユーザーB", "hi", fixedTime))
 
-	messages, err := repo.GetMessageByRoomID(context.Background(), 1)
+	messages, err := repo.GetMessagesByRoomID(context.Background(), roomID, 100)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 
 	if len(messages) != 2 {
-		t.Errorf("expected 2 messages, got %d", len(messages))
+		t.Fatalf("expected 2 messages, got %d", len(messages))
 	}
 
-	expected := []*Message{
-		{MessageID: 1, RoomID: 1, MessengerID: 2, Message: "hello", CreatedAt: fixedTime},
-		{MessageID: 2, RoomID: 1, MessengerID: 3, Message: "hi", CreatedAt: fixedTime},
-	}
-
-	if !reflect.DeepEqual(expected, messages) {
-		t.Errorf("unexpected messages.\ngot:  %+v\nwant: %+v", messages, expected)
+	if messages[0].Content != "hello" || messages[1].Content != "hi" {
+		t.Errorf("unexpected message content")
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %v", err)
+		t.Errorf("unfulfilled expectations: %v", err)
 	}
 }

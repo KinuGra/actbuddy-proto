@@ -2,11 +2,20 @@ package room
 
 import (
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Room struct {
-	RoomID    int64     `json:"room_id" db:"room_id"`
-	UserID1   int64     `json:"user_id1" db:"user_id1"`
-	UserID2   int64     `json:"user_id2" db:"user_id2"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	ID                  uuid.UUID  `db:"id"`
+	BuddyRelationshipID *uuid.UUID `db:"buddy_relationship_id"`
+	CreatedAt           time.Time  `db:"created_at"`
+}
+
+// RoomWithPartner はルーム一覧API用（パートナー情報付き）
+type RoomWithPartner struct {
+	ID            uuid.UUID `db:"id"`
+	PartnerID     uuid.UUID `db:"partner_id"`
+	PartnerName   string    `db:"partner_name"`
+	CreatedAt     time.Time `db:"created_at"`
 }

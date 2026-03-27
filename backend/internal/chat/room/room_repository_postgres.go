@@ -3,6 +3,8 @@ package room
 import (
 	"context"
 	"database/sql"
+
+	"github.com/google/uuid"
 )
 
 type PostgresRepository struct {
@@ -13,68 +15,62 @@ func NewPostgresRepository(db *sql.DB) RoomRepository {
 	return &PostgresRepository{db: db}
 }
 
-func (r *PostgresRepository) CreateRoom(ctx context.Context, userID1, userID2 int64) (int64, error) {
-	query := `
-	INSERT INTO rooms (user_id1, user_id2)
-	VALUES ($1, $2)
-	RETURNING room_id
-	`
-
-	var roomID int64
-
-	err := r.db.QueryRowContext(ctx, query, userID1, userID2).Scan(&roomID)
-	if err != nil {
-		return 0, err
-	}
-
-	return roomID, nil
-}
-
-func (r *PostgresRepository) GetRoomByID(ctx context.Context, roomID int64) (*Room, error) {
-
-	query := `
-	SELECT room_id, user_id1, user_id2, created_at
-	FROM rooms
-	WHERE room_id = $1
-	`
-
-	var room Room
-
-	err := r.db.QueryRowContext(ctx, query, roomID).
-		Scan(&room.RoomID, &room.UserID1, &room.UserID2, &room.CreatedAt)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &room, nil
-}
-
-func (r *PostgresRepository) GetRoomByUser(ctx context.Context, userID int64) ([]*Room, error) {
-	query := `
-	SELECT room_id, user_id1, user_id2, created_at
-	FROM rooms
-	WHERE user_id1 = $1 OR user_id2 = $1
-	`
-
-	rows, err := r.db.QueryContext(ctx, query, userID)
+func (r *PostgresRepository) GetRoomsByUserID(ctx context.Context, userID uuid.UUID) ([]*RoomWithPartner, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT
+			rm.room_id AS id,
+			partner.user_id AS partner_id,
+			u.display_name AS partner_name,
+			ro.created_at
+		FROM room_members rm
+		INNER JOIN rooms ro ON ro.id = rm.room_id
+		INNER JOIN room_members partner ON partner.room_id = rm.room_id AND partner.user_id != $1
+		INNER JOIN users u ON u.id = partner.user_id
+		WHERE rm.user_id = $1
+		ORDER BY ro.created_at DESC
+	`, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var rooms []*Room
+	var rooms []*RoomWithPartner
 	for rows.Next() {
-		var room Room
-		if err := rows.Scan(&room.RoomID, &room.UserID1, &room.UserID2, &room.CreatedAt); err != nil {
+		rp := &RoomWithPartner{}
+		if err := rows.Scan(&rp.ID, &rp.PartnerID, &rp.PartnerName, &rp.CreatedAt); err != nil {
 			return nil, err
 		}
-		rooms = append(rooms, &room)
+		rooms = append(rooms, rp)
 	}
+	return rooms, rows.Err()
+}
 
-	if err := rows.Err(); err != nil {
+func (r *PostgresRepository) GetUserRoomIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT room_id FROM room_members WHERE user_id = $1
+	`, userID)
+	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
-	return rooms, nil
+	var roomIDs []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		roomIDs = append(roomIDs, id)
+	}
+	return roomIDs, rows.Err()
+}
+
+func (r *PostgresRepository) IsRoomMember(ctx context.Context, roomID, userID uuid.UUID) (bool, error) {
+	var exists bool
+	err := r.db.QueryRowContext(ctx, `
+		SELECT EXISTS(
+			SELECT 1 FROM room_members WHERE room_id = $1 AND user_id = $2
+		)
+	`, roomID, userID).Scan(&exists)
+	return exists, err
 }

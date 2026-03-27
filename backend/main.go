@@ -16,6 +16,9 @@ import (
 
 	"backend/internal/auth"
 	"backend/internal/buddy"
+	"backend/internal/chat"
+	chatmessage "backend/internal/chat/message"
+	chatroom "backend/internal/chat/room"
 	"backend/internal/chat/websocket"
 	"backend/internal/task"
 
@@ -51,6 +54,12 @@ func main() {
 	buddyHandler := buddy.NewHandler(buddySvc)
 	buddy.StartMatchingJob(buddySvc)
 
+	roomRepo := chatroom.NewPostgresRepository(db)
+	roomSvc := chatroom.NewRoomService(roomRepo)
+	msgRepo := chatmessage.NewPostgresRepository(db)
+	msgSvc := chatmessage.NewMessageService(msgRepo)
+	chatHandler := chat.NewHandler(roomSvc, msgSvc)
+
 	// Ginルーター
 	r := gin.Default()
 
@@ -78,6 +87,10 @@ func main() {
 		protected.POST("/auth/logout", authHandler.Logout)
 		protected.GET("/auth/me", authHandler.Me)
 
+		// チャット
+		protected.GET("/rooms", chatHandler.GetRooms)
+		protected.GET("/rooms/:id/messages", chatHandler.GetMessages)
+
 		// バディ
 		buddyGroup := protected.Group("/buddy")
 		{
@@ -96,7 +109,7 @@ func main() {
 	go hub.Run()
 
 	r.GET("/ws", func(c *gin.Context) {
-		websocket.ServeWs(hub, c.Writer, c.Request)
+		websocket.ServeWs(hub, authService, roomSvc, msgSvc, c.Writer, c.Request)
 	})
 
 	v1 := r.Group("/api/v1")

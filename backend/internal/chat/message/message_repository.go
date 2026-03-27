@@ -1,8 +1,12 @@
 package message
 
-import "context"
+import (
+	"context"
+
+	"github.com/google/uuid"
+)
 
 type MessageRepository interface {
-	SendMessage(ctx context.Context, roomID int64, userID int64, message string) (int64, error)
-	GetMessageByRoomID(ctx context.Context, roomID int64) ([]*Message, error)
+	SaveMessage(ctx context.Context, roomID, senderID uuid.UUID, content string) (*Message, error)
+	GetMessagesByRoomID(ctx context.Context, roomID uuid.UUID, limit int) ([]*Message, error)
 }
