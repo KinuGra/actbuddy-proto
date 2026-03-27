@@ -3,57 +3,48 @@ package websocket
 import (
 	"encoding/json"
 	"log"
+
+	"github.com/google/uuid"
 )
 
 type Hub struct {
-	rooms      map[int64]map[*Client]bool
-	broadcast  chan *SavedMessage
+	rooms      map[uuid.UUID]map[*Client]bool
+	broadcast  chan *BroadcastMessage
 	register   chan *Client
 	unregister chan *Client
 }
 
+// BroadcastMessage は Hub 内でブロードキャストするメッセージ
+type BroadcastMessage struct {
+	RoomID  uuid.UUID
+	Payload []byte
+}
+
 func NewHub() *Hub {
 	return &Hub{
-		rooms:      make(map[int64]map[*Client]bool),
-		broadcast:  make(chan *SavedMessage),
+		rooms:      make(map[uuid.UUID]map[*Client]bool),
+		broadcast:  make(chan *BroadcastMessage),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 	}
-}
-
-func getRoomsByID(id int64) []int64 {
-	return testRooms[id]
-}
-
-var testRooms = map[int64][]int64{
-	1: {1, 2},
-	2: {1},
-	3: {2},
 }
 
 func (h *Hub) Run() {
 	for {
 		select {
 		case client := <-h.register:
-			// このクライアントがどのルームに所属しているかサーバーに聞く
-			roomIDs := getRoomsByID(client.id)
-
-			for _, roomID := range roomIDs {
-
+			// クライアントが所属するルームすべてに登録
+			for _, roomID := range client.roomIDs {
 				if h.rooms[roomID] == nil {
 					h.rooms[roomID] = make(map[*Client]bool)
 				}
-
 				h.rooms[roomID][client] = true
 			}
 
 		case client := <-h.unregister:
-			// このクライアントがどのルームに所属しているかサーバーに聞く
-			roomIDs := getRoomsByID(client.id)
-			for _, roomID := range roomIDs {
+			for _, roomID := range client.roomIDs {
 				if clients, ok := h.rooms[roomID]; ok {
 					delete(clients, client)
-
 					if len(clients) == 0 {
 						delete(h.rooms, roomID)
 					}
@@ -61,43 +52,27 @@ func (h *Hub) Run() {
 			}
 			close(client.send)
 
-		case savedMessage := <-h.broadcast:
-			log.Printf(
-				"Broadcasting message to room %d: %s",
-				savedMessage.RoomID,
-				savedMessage.Content,
-			)
-
-			data, err := json.Marshal(savedMessage)
+		case bm := <-h.broadcast:
+			data, err := json.Marshal(bm.Payload)
 			if err != nil {
 				log.Println("json marshal error:", err)
 				continue
 			}
 
-			if clients, ok := h.rooms[savedMessage.RoomID]; ok {
+			if clients, ok := h.rooms[bm.RoomID]; ok {
 				for client := range clients {
 					select {
-					case client.send <- data:
-						log.Printf(
-							"Sent message to client: %v, Client %d",
-							client.conn.RemoteAddr(), client.id,
-						)
-
+					case client.send <- bm.Payload:
 					default:
 						delete(clients, client)
 						close(client.send)
-
 						if len(clients) == 0 {
-							delete(h.rooms, savedMessage.RoomID)
+							delete(h.rooms, bm.RoomID)
 						}
-
-						log.Printf(
-							"Failed to send message, client removed: %v",
-							client.conn.RemoteAddr(),
-						)
 					}
 				}
 			}
+			_ = data
 		}
 	}
 }

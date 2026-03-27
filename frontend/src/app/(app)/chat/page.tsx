@@ -1,56 +1,58 @@
 'use client'
-import { useState, useEffect } from 'react'
+
+import { Suspense, useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useChat } from '@/features/chat/hooks/useChat'
 import { ChatRoomList } from '@/features/chat/components/ChatRoomList'
 import { ChatWindow } from '@/features/chat/components/ChatWindow'
 import { Card, CardContent } from '@/components/ui/card'
 import { MessageSquare } from 'lucide-react'
 
-export default function Chat() {
-  const { chatRooms, sendMessage, getMessages, receiveMessage, addMessage } = useChat()
-  const [selectedRoomId, setSelectedRoomId] = useState<string | undefined>(
-    undefined
-  )
+function ChatContent() {
+  const searchParams = useSearchParams()
+  const [selectedRoomId, setSelectedRoomId] = useState<string | undefined>(undefined)
 
-  const selectedRoom = chatRooms.find((room) => room.id === selectedRoomId)
+  const { chatRooms, wsURL, fetchMessages, addMessage, getMessages } = useChat()
+
+  // ?room=<uuid> でルームを初期選択
+  useEffect(() => {
+    const roomParam = searchParams.get('room')
+    if (roomParam) {
+      setSelectedRoomId(roomParam)
+    }
+  }, [searchParams])
+
+  // ルーム選択時にメッセージ履歴を取得
+  const handleSelectRoom = (roomId: string) => {
+    setSelectedRoomId(roomId)
+    fetchMessages(roomId)
+  }
+
+  const selectedRoom = chatRooms.find((r) => r.id === selectedRoomId)
   const messages = selectedRoomId ? getMessages(selectedRoomId) : []
-
-  // userIdの手動設定
-  // todo: 認証からuserIdを取得
-  const [userId, setUserId] = useState("1")
-
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    setUserId(urlParams.get("userId") || "1");
-  }, []);
-
-  useEffect(() => {
-    console.log("現在の userId:", userId);
-  }, [userId]);
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">チャット</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* チャットルーム一覧 */}
         <div className="md:col-span-1">
           <h2 className="text-xl font-semibold mb-4">チャットルーム</h2>
           <ChatRoomList
             rooms={chatRooms}
-            onSelectRoom={setSelectedRoomId}
+            onSelectRoom={handleSelectRoom}
             selectedRoomId={selectedRoomId}
           />
         </div>
 
-        {/* チャットウィンドウ */}
         <div className="md:col-span-2">
-          {selectedRoom ? (
+          {selectedRoom && selectedRoomId ? (
             <ChatWindow
+              roomId={selectedRoomId}
               participantName={selectedRoom.participantName}
               messages={messages}
-              onAddMessage={(data) => addMessage(userId!, data)}
-              wsURL={`ws://localhost:8081/ws?userId=${userId}`}
+              onReceiveMessage={addMessage}
+              wsURL={wsURL}
             />
           ) : (
             <Card className="h-[600px]">
@@ -65,5 +67,13 @@ export default function Chat() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function Chat() {
+  return (
+    <Suspense>
+      <ChatContent />
+    </Suspense>
   )
 }

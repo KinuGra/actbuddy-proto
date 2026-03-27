@@ -3,6 +3,8 @@ package message
 import (
 	"context"
 	"database/sql"
+
+	"github.com/google/uuid"
 )
 
 type PostgresRepository struct {
@@ -13,31 +15,31 @@ func NewPostgresRepository(db *sql.DB) MessageRepository {
 	return &PostgresRepository{db: db}
 }
 
-func (r *PostgresRepository) SendMessage(ctx context.Context, roomID int64, userID int64, message string) (int64, error) {
-	query := `
-	INSERT INTO messages (room_id, messenger_id, message) VALUES($1, $2, $3)
-	RETURNING message_id
-	`
-
-	var messageID int64
-
-	err := r.db.QueryRowContext(ctx, query, roomID, userID, message).Scan(&messageID)
-
+func (r *PostgresRepository) SaveMessage(ctx context.Context, roomID, senderID uuid.UUID, content string) (*Message, error) {
+	msg := &Message{}
+	err := r.db.QueryRowContext(ctx, `
+		INSERT INTO messages (room_id, sender_id, content)
+		VALUES ($1, $2, $3)
+		RETURNING id, room_id, sender_id, content, created_at
+	`, roomID, senderID, content).Scan(
+		&msg.ID, &msg.RoomID, &msg.SenderID, &msg.Content, &msg.CreatedAt,
+	)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-
-	return messageID, nil
+	// SenderName はリポジトリ外で設定
+	return msg, nil
 }
 
-func (r *PostgresRepository) GetMessageByRoomID(ctx context.Context, roomID int64) ([]*Message, error) {
-	query := `
-	SELECT message_id, room_id, messenger_id, message, created_at FROM messages
-	WHERE room_id = $1
-	`
-
-	rows, err := r.db.QueryContext(ctx, query, roomID)
-
+func (r *PostgresRepository) GetMessagesByRoomID(ctx context.Context, roomID uuid.UUID, limit int) ([]*Message, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT m.id, m.room_id, m.sender_id, u.display_name AS sender_name, m.content, m.created_at
+		FROM messages m
+		INNER JOIN users u ON u.id = m.sender_id
+		WHERE m.room_id = $1
+		ORDER BY m.created_at ASC
+		LIMIT $2
+	`, roomID, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -45,17 +47,11 @@ func (r *PostgresRepository) GetMessageByRoomID(ctx context.Context, roomID int6
 
 	var messages []*Message
 	for rows.Next() {
-		var message Message
-		if err := rows.Scan(&message.MessageID, &message.RoomID, &message.MessengerID, &message.Message, &message.CreatedAt); err != nil {
+		msg := &Message{}
+		if err := rows.Scan(&msg.ID, &msg.RoomID, &msg.SenderID, &msg.SenderName, &msg.Content, &msg.CreatedAt); err != nil {
 			return nil, err
 		}
-
-		messages = append(messages, &message)
+		messages = append(messages, msg)
 	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return messages, nil
+	return messages, rows.Err()
 }
