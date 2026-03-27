@@ -14,6 +14,7 @@ import (
 	"os"
 
 	"backend/internal/chat/websocket"
+	"backend/internal/chat/room"
 	"backend/internal/task"
 
 	"github.com/gin-contrib/cors"
@@ -60,6 +61,18 @@ func main() {
 		actionItems.GET("/:uuid", taskHandler.Get)
 		actionItems.PUT("/:uuid", taskHandler.Update)
 		actionItems.DELETE("/:uuid", taskHandler.Delete)
+	}
+
+	// roomのバックエンド
+	roomRepo := room.NewPostgresRepository(db)
+	roomService := room.NewService(roomRepo)
+	roomHandler := room.NewHandler(roomService)
+
+	rooms := v1.Group("/rooms")
+	{
+		rooms.GET("/user/:user_id", roomHandler.GetRoomsByUser) // 指定ユーザーのルーム一覧取得
+		rooms.GET("/room/:room_id", roomHandler.GetRoomByID) // 指定ユーザーのルーム一覧取得
+		rooms.POST("", roomHandler.CreateRoom)           // ルーム作成
 	}
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
