@@ -14,6 +14,8 @@ export interface ActionItem {
   kind: string
   status: ActionItemStatus
   createdAt: Date
+  ownerName?: string
+  ownerType?: 'self' | 'buddy' | 'friend'
 }
 
 export type CalendarView = 'month' | 'week' | 'day'

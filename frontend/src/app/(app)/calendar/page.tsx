@@ -9,6 +9,10 @@ export default function Calendar() {
     selectedDate,
     setSelectedDate,
     actionItems,
+    currentUserId,
+    partners,
+    visibleUserIds,
+    toggleUserVisibility,
     addActionItem,
     updateActionItemStatus,
     deleteActionItem,
@@ -37,6 +41,10 @@ export default function Calendar() {
         onAddItem={addActionItem}
         onUpdateStatus={updateActionItemStatus}
         onDelete={deleteActionItem}
+        currentUserId={currentUserId}
+        partners={partners}
+        visibleUserIds={visibleUserIds}
+        onToggleUser={toggleUserVisibility}
       />
     </div>
   )
