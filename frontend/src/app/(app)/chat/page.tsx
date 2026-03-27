@@ -50,7 +50,7 @@ export default function Chat() {
               participantName={selectedRoom.participantName}
               messages={messages}
               onAddMessage={(data) => addMessage(userId!, data)}
-              wsURL={`ws://localhost:8081/ws?userId=${userId}`}
+              wsURL={`ws://localhost:8080/ws?userId=${userId}`}
             />
           ) : (
             <Card className="h-[600px]">
