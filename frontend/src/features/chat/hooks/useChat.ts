@@ -3,9 +3,32 @@ import { Message, ChatRoom } from '../types/chat'
 import { mockMessages, mockChatRooms } from '../mocks/mockMessages'
 
 export function useChat() {
-  const [chatRooms] = useState<ChatRoom[]>(mockChatRooms)
+  const [chatRooms, setChatRooms] = useState<ChatRoom[]>([])
   const [messages, setMessages] =
     useState<Record<string, Message[]>>(mockMessages)
+
+  const fetchChatRooms = useCallback(async (userId: string) => {
+    try {
+      const res = await fetch(`http://localhost:8080/api/v1/rooms/user/11111111-1111-1111-1111-111111111111`)
+      console.log(res);
+      if (!res.ok) throw new Error('Failed to fetch chat rooms')
+
+      const jsonData = await res.json()
+
+      const data: ChatRoom[] = jsonData.map((room: any) => ({
+        id: room.id,
+        participantId: room.participant_id,
+        participantName: "テストユーザー", // 本来は room.participantName をセット
+        lastMessage: undefined,
+        unreadCount: 0,
+      }));
+
+      setChatRooms(data)
+    } catch (err) {
+      console.error(err)
+    }
+  }, [])
+
 
   // メッセージを送信する関数
   // ユーザーのUIに反映
@@ -39,8 +62,8 @@ export function useChat() {
     if (userId != `${msg.sender_id}`) {
       const receivedMessage: Message = {
         id: `${msg.message_id}`,
-        roomId: msg.room_id,
-        senderId: msg.sender_id,
+        roomId: `${msg.room_id}`,
+        senderId: `${msg.sender_id}`,
         senderName: msg.sender_name,
         content: msg.content,
         timestamp: msg.created_at,
@@ -61,8 +84,8 @@ export function useChat() {
     if (userId == `${msg.sender_id}`) {
       // 自分のメッセージをUIに反映
       const newMessage: Message = {
-        id: msg.message_id,
-        roomId: msg.room_id,
+        id: `${msg.message_id}`,
+        roomId: `${msg.room_id}`,
         senderId: 'current',
         senderName: 'あなた',
         content,
@@ -77,8 +100,8 @@ export function useChat() {
       // 他のユーザーのメッセージをUIに反映
       const receivedMessage: Message = {
         id: `${msg.message_id}`,
-        roomId: msg.room_id,
-        senderId: msg.sender_id,
+        roomId: `${msg.room_id}`,
+        senderId: `${msg.sender_id}`,
         senderName: msg.sender_name,
         content: msg.content,
         timestamp: new Date(msg.created_at),
@@ -99,6 +122,7 @@ export function useChat() {
   )
 
   return {
+    fetchChatRooms,
     chatRooms,
     messages,
     sendMessage,
