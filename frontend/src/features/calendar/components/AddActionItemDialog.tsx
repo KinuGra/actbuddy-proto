@@ -22,6 +22,7 @@ const schema = z
   .object({
     title: z.string().min(1, 'タイトルは必須です'),
     description: z.string().optional(),
+    kind: z.enum(['task', 'break']),
     startTime: z
       .string()
       .regex(/^\d{2}:\d{2}$/, '時刻形式が正しくありません（HH:mm）'),
@@ -112,12 +113,14 @@ export function AddActionItemDialog({
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       title: '',
       description: '',
+      kind: 'task' as const,
       startTime: defaultStartTime,
       endTime: defaultEndTime,
     },
@@ -129,6 +132,7 @@ export function AddActionItemDialog({
       reset({
         title: '',
         description: '',
+        kind: 'task',
         startTime: defaultStartTime,
         endTime: defaultEndTime,
       })
@@ -139,6 +143,8 @@ export function AddActionItemDialog({
     setOpen(value)
     onOpenChange?.(value)
   }
+
+  const selectedKind = watch('kind')
 
   const onSubmit = (data: FormValues) => {
     const [startHour, startMinute] = data.startTime.split(':').map(Number)
@@ -156,7 +162,7 @@ export function AddActionItemDialog({
       description: data.description || undefined,
       startTime: start,
       endTime: end,
-      kind: 'task',
+      kind: data.kind,
       status: 'not_started',
     })
 
@@ -173,6 +179,19 @@ export function AddActionItemDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
+          <div className="space-y-1">
+            <Label>種別</Label>
+            <div className="flex gap-3">
+              <label className={`flex items-center gap-2 cursor-pointer rounded-lg border px-4 py-2 text-sm transition-colors ${selectedKind === 'task' ? 'border-primary bg-primary/10 font-medium' : 'border-border'}`}>
+                <input type="radio" value="task" {...register('kind')} className="sr-only" />
+                タスク
+              </label>
+              <label className={`flex items-center gap-2 cursor-pointer rounded-lg border px-4 py-2 text-sm transition-colors ${selectedKind === 'break' ? 'border-primary bg-primary/10 font-medium' : 'border-border'}`}>
+                <input type="radio" value="break" {...register('kind')} className="sr-only" />
+                休憩
+              </label>
+            </div>
+          </div>
           <div className="space-y-1">
             <Label htmlFor="title">タイトル *</Label>
             <Input
