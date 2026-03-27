@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { MessageSquare } from 'lucide-react'
 
 export default function Chat() {
-  const { chatRooms, sendMessage, getMessages, receiveMessage, addMessage } = useChat()
+  const { fetchChatRooms, chatRooms, sendMessage, getMessages, receiveMessage, addMessage } = useChat()
   const [selectedRoomId, setSelectedRoomId] = useState<string | undefined>(
     undefined
   )
@@ -17,16 +17,20 @@ export default function Chat() {
 
   // userIdの手動設定
   // todo: 認証からuserIdを取得
-  const [userId, setUserId] = useState("1")
+  const [userId, setUserId] = useState("11111111-1111-1111-1111-111111111111")
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    setUserId(urlParams.get("userId") || "1");
+    setUserId(urlParams.get("userId") || "11111111-1111-1111-1111-111111111111");
   }, []);
 
   useEffect(() => {
     console.log("現在の userId:", userId);
   }, [userId]);
+
+  useEffect(() => {
+    fetchChatRooms(userId)
+  }, [userId])
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -51,6 +55,7 @@ export default function Chat() {
               messages={messages}
               onAddMessage={(data) => addMessage(userId!, data)}
               wsURL={`ws://localhost:8080/ws?userId=${userId}`}
+              selectedRoomId={selectedRoom.id}
             />
           ) : (
             <Card className="h-[600px]">
