@@ -1,11 +1,12 @@
 // マッチング状態表示用コンポーネント
 // status: マッチング状態
-import { MatchingStatus } from '../types/matching'
-import { Loader2, Search, CheckCircle2 } from 'lucide-react'
+import { Loader2, CheckCircle2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 
+type MatchingStatusValue = 'searching' | 'matched'
+
 interface MatchingStatusProps {
-  status: MatchingStatus
+  status: MatchingStatusValue
 }
 
 export function MatchingStatusDisplay({ status }: MatchingStatusProps) {
