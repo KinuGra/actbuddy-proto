@@ -1,0 +1,6 @@
+CREATE TABLE rooms (
+    room_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id1 UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id2 UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);

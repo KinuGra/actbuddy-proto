@@ -13,24 +13,24 @@ func NewPostgresRepository(db *sql.DB) RoomRepository {
 	return &PostgresRepository{db: db}
 }
 
-func (r *PostgresRepository) CreateRoom(ctx context.Context, userID1, userID2 int64) (int64, error) {
+func (r *PostgresRepository) CreateRoom(ctx context.Context, userID1, userID2 string) (string, error) {
 	query := `
 	INSERT INTO rooms (user_id1, user_id2)
 	VALUES ($1, $2)
 	RETURNING room_id
 	`
 
-	var roomID int64
+	var roomID string
 
 	err := r.db.QueryRowContext(ctx, query, userID1, userID2).Scan(&roomID)
 	if err != nil {
-		return 0, err
+		return "0", err
 	}
 
 	return roomID, nil
 }
 
-func (r *PostgresRepository) GetRoomByID(ctx context.Context, roomID int64) (*Room, error) {
+func (r *PostgresRepository) GetRoomByID(ctx context.Context, roomID string) (*Room, error) {
 
 	query := `
 	SELECT room_id, user_id1, user_id2, created_at
@@ -50,7 +50,7 @@ func (r *PostgresRepository) GetRoomByID(ctx context.Context, roomID int64) (*Ro
 	return &room, nil
 }
 
-func (r *PostgresRepository) GetRoomByUser(ctx context.Context, userID int64) ([]*Room, error) {
+func (r *PostgresRepository) GetRoomByUser(ctx context.Context, userID string) ([]*Room, error) {
 	query := `
 	SELECT room_id, user_id1, user_id2, created_at
 	FROM rooms
