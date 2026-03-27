@@ -76,7 +76,7 @@ export const mockChatRooms: ChatRoom[] = [
     participantId: '1',
     participantName: '田中太郎',
     lastMessage: mockMessages['1'][mockMessages['1'].length - 1],
-    unreadCount: 1,
+    unreadCount: 0,
   },
   {
     id: '2',
