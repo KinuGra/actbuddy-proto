@@ -17,6 +17,7 @@ interface ChatWindowProps {
   messages: Message[]
   onAddMessage: (data: string) => void
   wsURL: string
+  selectedRoomId: string
 }
 
 export function ChatWindow({
@@ -24,6 +25,7 @@ export function ChatWindow({
   messages,
   onAddMessage,
   wsURL,
+  selectedRoomId,
 }: ChatWindowProps) {
   const [inputValue, setInputValue] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -63,8 +65,8 @@ export function ChatWindow({
 
       // todo: 認証情報からsender_idを取得
       const newMessage = {
-        room_id: 1,
-        sender_id: 1,
+        room_id: selectedRoomId,
+        sender_id: '11111111-1111-1111-1111-111111111111',
         content: inputValue.trim(),
       }
 
