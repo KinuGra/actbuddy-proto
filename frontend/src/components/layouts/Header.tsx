@@ -23,7 +23,6 @@ import {
   X,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { mockChatRooms } from '@/features/chat/mocks/mockMessages'
 import { useCurrentUser } from '@/features/auth/hooks/useCurrentUser'
 import { useRouter } from 'next/navigation'
 
@@ -74,11 +73,6 @@ export function Header() {
     router.push('/login')
   }
 
-  // 未読メッセージ合計を計算
-  const totalUnreadMessages = mockChatRooms.reduce(
-    (sum, room) => sum + room.unreadCount,
-    0
-  )
 
   return (
     <>
@@ -140,11 +134,6 @@ export function Header() {
                 >
                   <Mail className="w-5 h-5" />
                 </Link>
-                {totalUnreadMessages > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center leading-none font-bold">
-                    {totalUnreadMessages > 9 ? '9+' : totalUnreadMessages}
-                  </span>
-                )}
               </div>
 
               {/* User Avatar Dropdown */}
