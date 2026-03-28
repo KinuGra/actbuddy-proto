@@ -1,21 +1,40 @@
-// マッチング機能の状態・型定義
-// MatchingStatus: マッチング状態
-// MatchingState: 現在の状態（matchedUser, searchStartTime含む）
-// BuddyRelation: バディ関係の詳細
-import { User } from '../../users/types/user'
-
-export type MatchingStatus = 'idle' | 'searching' | 'matched' | 'in-buddy'
-
-export interface MatchingState {
-  status: MatchingStatus
-  matchedUser: User | null
-  searchStartTime: Date | null
+export interface BuddyProfile {
+  id: string
+  user_id: string
+  bio: string
+  goal_types: string[]
+  active_times: string[]
 }
 
-export interface BuddyRelation {
+export interface UpsertProfileRequest {
+  bio: string
+  goal_types: string[]
+  active_times: string[]
+}
+
+export interface QueueStatus {
+  in_queue: boolean
+  status?: string
+  joined_at?: string
+  expires_at?: string
+}
+
+export interface PartnerInfo {
   id: string
-  user: User
-  startDate: Date
-  endDate: Date
-  isFriend: boolean
+  display_name: string
+}
+
+export interface BuddyRelationship {
+  id: string
+  partner: PartnerInfo
+  status: string
+  matched_at: string
+  ends_at: string
+  room_id: string
+}
+
+export interface BuddyCapacity {
+  current_count: number
+  max_count: number
+  achievement_rate: number
 }

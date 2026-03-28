@@ -30,7 +30,7 @@ type ActionItem struct {
 }
 
 type CreateRequest struct {
-	UserID      string           `json:"user_id"      binding:"required,uuid"`
+	UserID      string           `json:"user_id"      binding:"omitempty,uuid"`
 	Title       string           `json:"title"        binding:"required"`
 	Description string           `json:"description"`
 	StartTime   time.Time        `json:"start_time"   binding:"required"`

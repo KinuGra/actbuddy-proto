@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import {
@@ -23,8 +23,8 @@ import {
   X,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { currentUser } from '@/features/users/mocks/mockUsers'
-import { mockChatRooms } from '@/features/chat/mocks/mockMessages'
+import { useCurrentUser } from '@/features/auth/hooks/useCurrentUser'
+import { useRouter } from 'next/navigation'
 
 interface NavItem {
   href: string
@@ -52,14 +52,27 @@ const NAV_ITEMS: NavItem[] = [
 
 const MOCK_NOTIFICATION_COUNT = 3
 
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080'
+
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const router = useRouter()
+  const currentUser = useCurrentUser()
 
-  // 未読メッセージ合計を計算
-  const totalUnreadMessages = mockChatRooms.reduce(
-    (sum, room) => sum + room.unreadCount,
-    0
-  )
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const handleLogout = async () => {
+    await fetch(`${API_BASE_URL}/api/auth/logout`, {
+      method: 'POST',
+      credentials: 'include',
+    })
+    router.push('/login')
+  }
+
 
   return (
     <>
@@ -121,22 +134,17 @@ export function Header() {
                 >
                   <Mail className="w-5 h-5" />
                 </Link>
-                {totalUnreadMessages > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center leading-none font-bold">
-                    {totalUnreadMessages > 9 ? '9+' : totalUnreadMessages}
-                  </span>
-                )}
               </div>
 
               {/* User Avatar Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-bold hover:opacity-80 transition-opacity">
-                    {currentUser.name.charAt(0)}
+                    {mounted ? (currentUser?.display_name.charAt(0) ?? '?') : '?'}
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>{currentUser.name}</DropdownMenuLabel>
+                  <DropdownMenuLabel>{mounted ? (currentUser?.display_name ?? '') : ''}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
                     <UserCircle className="w-4 h-4 mr-2" />
@@ -147,7 +155,10 @@ export function Header() {
                     設定
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-red-600">
+                  <DropdownMenuItem
+                    className="text-red-600"
+                    onClick={handleLogout}
+                  >
                     <LogOut className="w-4 h-4 mr-2" />
                     ログアウト
                   </DropdownMenuItem>

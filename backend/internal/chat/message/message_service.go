@@ -2,6 +2,8 @@ package message
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 type MessageService struct {
@@ -12,10 +14,10 @@ func NewMessageService(repo MessageRepository) *MessageService {
 	return &MessageService{repo: repo}
 }
 
-func (s *MessageService) SendMessage(ctx context.Context, roomID int64, userID int64, message string) (int64, error) {
-	return s.repo.SendMessage(ctx, roomID, userID, message)
+func (s *MessageService) SaveMessage(ctx context.Context, roomID, senderID uuid.UUID, content string) (*Message, error) {
+	return s.repo.SaveMessage(ctx, roomID, senderID, content)
 }
 
-func (s *MessageService) GetMessageByRoomID(ctx context.Context, roomID int64) ([]*Message, error) {
-	return s.repo.GetMessageByRoomID(ctx, roomID)
+func (s *MessageService) GetMessagesByRoomID(ctx context.Context, roomID uuid.UUID, limit int) ([]*Message, error) {
+	return s.repo.GetMessagesByRoomID(ctx, roomID, limit)
 }

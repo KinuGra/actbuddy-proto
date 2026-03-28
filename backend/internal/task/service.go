@@ -13,6 +13,7 @@ type Service interface {
 	Create(ctx context.Context, req *CreateRequest) (*ActionItem, error)
 	GetByUUID(ctx context.Context, id uuid.UUID) (*ActionItem, error)
 	ListByUserID(ctx context.Context, userID uuid.UUID) ([]*ActionItem, error)
+	ListForUser(ctx context.Context, requesterID uuid.UUID, targetUserID uuid.UUID) ([]*ActionItem, error)
 	Update(ctx context.Context, id uuid.UUID, req *UpdateRequest) (*ActionItem, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 }
@@ -48,6 +49,10 @@ func (s *service) GetByUUID(ctx context.Context, id uuid.UUID) (*ActionItem, err
 
 func (s *service) ListByUserID(ctx context.Context, userID uuid.UUID) ([]*ActionItem, error) {
 	return s.repo.FindByUserID(ctx, userID)
+}
+
+func (s *service) ListForUser(ctx context.Context, requesterID uuid.UUID, targetUserID uuid.UUID) ([]*ActionItem, error) {
+	return s.repo.FindByUserIDAsPartner(ctx, requesterID, targetUserID)
 }
 
 func (s *service) Update(ctx context.Context, id uuid.UUID, req *UpdateRequest) (*ActionItem, error) {

@@ -1,105 +1,109 @@
 package websocket
 
 import (
-	"log"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
-func TestServeWsSingleClient(t *testing.T) {
-	hub := NewHub()
-	go hub.Run()
-
-	// HTTP テストサーバー
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ServeWs(hub, w, r)
-	}))
-	defer server.Close()
-
-	// WebSocket URL
-	wsURL := "ws" + server.URL[len("http"):] + "/"
-
-	// WebSocket 接続
-	ws, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+// stubServeWs は認証・DB依存なしのテスト用 WebSocket ハンドラー
+func stubServeWs(hub *Hub, userID uuid.UUID, displayName string, roomIDs []uuid.UUID, msgSvc stubMsgSvc, w http.ResponseWriter, r *http.Request) {
+	var up = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
+	conn, err := up.Upgrade(w, r, nil)
 	if err != nil {
-		t.Fatalf("Dial error: %v", err)
+		return
 	}
-	defer ws.Close()
-
-	// メッセージ送信
-	if err := ws.WriteMessage(websocket.TextMessage, []byte("hello")); err != nil {
-		t.Fatalf("Write error: %v", err)
-	}
-
-	// Hub から自分に返ってくるか確認
-	_, msg, err := ws.ReadMessage()
-	if err != nil {
-		t.Fatalf("Read error: %v", err)
-	}
-
-	if string(msg) != "hello" {
-		t.Fatalf("Expected 'hello', got %s", string(msg))
-	}
-
-	log.Printf("Client received %s successfully", string(msg))
+	client := NewClient(userID, displayName, roomIDs, hub, conn, make(chan []byte, 256), nil)
+	hub.register <- client
+	go client.writePump()
+	client.readPump()
 }
 
-func TestServeWsMultipleClients(t *testing.T) {
+// stubMsgSvc はテスト用のダミー型（未使用、コンパイル確認用）
+type stubMsgSvc struct{}
+
+func TestHubBroadcastToRoom(t *testing.T) {
 	hub := NewHub()
 	go hub.Run()
 
-	// HTTP テストサーバー
+	roomID := uuid.New()
+	userA := uuid.New()
+	userB := uuid.New()
+	userC := uuid.New()
+
+	// room1: userA, userB  /  room2: userC
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ServeWs(hub, w, r)
+		userParam := r.URL.Query().Get("user")
+		switch userParam {
+		case "a":
+			stubServeWs(hub, userA, "A", []uuid.UUID{roomID}, stubMsgSvc{}, w, r)
+		case "b":
+			stubServeWs(hub, userB, "B", []uuid.UUID{roomID}, stubMsgSvc{}, w, r)
+		default:
+			stubServeWs(hub, userC, "C", []uuid.UUID{uuid.New()}, stubMsgSvc{}, w, r)
+		}
 	}))
 	defer server.Close()
 
-	// WebSocket URL
-	wsURL := "ws" + server.URL[len("http"):] + "/"
+	wsURL := func(user string) string {
+		return "ws" + server.URL[len("http"):] + "/?user=" + user
+	}
 
-	// Client1 WebSocket 接続
-	ws1, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	wsA, _, err := websocket.DefaultDialer.Dial(wsURL("a"), nil)
 	if err != nil {
-		t.Fatalf("Client1 Dial error: %v", err)
+		t.Fatalf("Dial A error: %v", err)
 	}
-	defer ws1.Close()
+	defer wsA.Close()
 
-	// Client2 WebSocket 接続
-	ws2, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	wsB, _, err := websocket.DefaultDialer.Dial(wsURL("b"), nil)
 	if err != nil {
-		t.Fatalf("Client2 Dial error: %v", err)
+		t.Fatalf("Dial B error: %v", err)
 	}
-	defer ws2.Close()
+	defer wsB.Close()
 
-	// メッセージ送信
-	if err := ws1.WriteMessage(websocket.TextMessage, []byte("hello")); err != nil {
-		t.Fatalf("Write error: %v", err)
-	}
-
-	// Hub から自分に返ってくるか確認
-	_, msg1, err := ws1.ReadMessage()
+	wsC, _, err := websocket.DefaultDialer.Dial(wsURL("c"), nil)
 	if err != nil {
-		t.Fatalf("Read error: %v", err)
+		t.Fatalf("Dial C error: %v", err)
+	}
+	defer wsC.Close()
+
+	// Hub が BroadcastMessage を受け取りルーム内のクライアントにだけ送る
+	payload, _ := json.Marshal(OutgoingMessage{
+		ID:         1,
+		RoomID:     roomID.String(),
+		SenderID:   userA.String(),
+		SenderName: "A",
+		Content:    "hello room",
+		CreatedAt:  time.Now(),
+	})
+	hub.broadcast <- &BroadcastMessage{RoomID: roomID, Payload: payload}
+
+	// A と B は受信できる
+	for _, ws := range []*websocket.Conn{wsA, wsB} {
+		ws.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
+		_, data, err := ws.ReadMessage()
+		if err != nil {
+			t.Errorf("expected message but got error: %v", err)
+			continue
+		}
+		var msg OutgoingMessage
+		if err := json.Unmarshal(data, &msg); err != nil {
+			t.Errorf("unmarshal error: %v", err)
+		}
+		if msg.Content != "hello room" {
+			t.Errorf("unexpected content: %s", msg.Content)
+		}
 	}
 
-	if string(msg1) != "hello" {
-		t.Fatalf("Expected 'hello', got %s", string(msg1))
+	// C は受信しない
+	wsC.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
+	_, _, err = wsC.ReadMessage()
+	if err == nil {
+		t.Error("C should not have received the message")
 	}
-
-	log.Printf("Client1 received %s successfully", string(msg1))
-
-	// Hub から自分に返ってくるか確認
-	_, msg2, err := ws2.ReadMessage()
-	if err != nil {
-		t.Fatalf("Read error: %v", err)
-	}
-
-	if string(msg2) != "hello" {
-		t.Fatalf("Expected 'hello', got %s", string(msg2))
-	}
-
-	log.Printf("Client2 received %s successfully", string(msg2))
 }

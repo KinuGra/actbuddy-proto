@@ -17,5 +17,5 @@ type Repository interface {
 	CreateSession(ctx context.Context, session *Session) error
 	GetSessionByToken(ctx context.Context, token string) (*Session, error)
 	DeleteSessionByToken(ctx context.Context, token string) error
-	DeleteSessionsByUserID(ctx context.Context, userID uuid.UUID) error
+	DeleteSessionByUserID(ctx context.Context, userID uuid.UUID) error
 }

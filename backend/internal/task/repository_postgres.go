@@ -114,6 +114,54 @@ func (r *postgresRepository) FindByUserID(ctx context.Context, userID uuid.UUID)
 	return items, rows.Err()
 }
 
+func (r *postgresRepository) FindByUserIDAsPartner(ctx context.Context, requesterID uuid.UUID, targetUserID uuid.UUID) ([]*ActionItem, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT ai.id, ai.uuid, ai.user_id, ai.title, ai.description,
+		       ai.start_time, ai.end_time, ai.kind, ai.status, ai.created_at, ai.updated_at
+		FROM action_items ai
+		WHERE ai.user_id = $2
+		  AND (
+		    EXISTS (
+		      SELECT 1 FROM buddy_relationships br
+		      WHERE br.status = 'active'
+		        AND br.ends_at > NOW()
+		        AND (
+		          (br.user_id_1 = $1 AND br.user_id_2 = $2)
+		          OR (br.user_id_1 = $2 AND br.user_id_2 = $1)
+		        )
+		    )
+		    OR EXISTS (
+		      SELECT 1 FROM friend_relationships fr
+		      WHERE (
+		        (fr.user_id_1 = $1 AND fr.user_id_2 = $2)
+		        OR (fr.user_id_1 = $2 AND fr.user_id_2 = $1)
+		      )
+		    )
+		  )
+		ORDER BY ai.start_time ASC
+	`, requesterID, targetUserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []*ActionItem
+	for rows.Next() {
+		item := &ActionItem{}
+		if err := rows.Scan(
+			&item.ID, &item.UUID, &item.UserID,
+			&item.Title, &item.Description,
+			&item.StartTime, &item.EndTime,
+			&item.Kind, &item.Status,
+			&item.CreatedAt, &item.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+	return items, rows.Err()
+}
+
 func (r *postgresRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	result, err := r.db.ExecContext(ctx, `DELETE FROM action_items WHERE uuid = $1`, id)
 	if err != nil {

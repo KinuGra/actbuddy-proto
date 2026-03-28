@@ -1,9 +1,16 @@
 package room
 
-import "context"
+import (
+	"context"
+
+	"github.com/google/uuid"
+)
 
 type RoomRepository interface {
-	CreateRoom(ctx context.Context, userID1, userID2 int64) (int64, error)
-	GetRoomByID(ctx context.Context, roomID int64) (*Room, error)
-	GetRoomByUser(ctx context.Context, userID int64) ([]*Room, error)
+	// ユーザーが参加しているルーム一覧（パートナー情報付き）
+	GetRoomsByUserID(ctx context.Context, userID uuid.UUID) ([]*RoomWithPartner, error)
+	// WebSocket接続時のルームID一覧取得
+	GetUserRoomIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error)
+	// ユーザーがルームメンバーかチェック
+	IsRoomMember(ctx context.Context, roomID, userID uuid.UUID) (bool, error)
 }

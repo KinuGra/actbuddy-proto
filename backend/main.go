@@ -7,60 +7,120 @@
 package main
 
 import (
-	_ "backend/docs"
 	"database/sql"
 	"log"
 	"net/http"
 	"os"
 
+	_ "backend/docs"
+
+	"backend/internal/auth"
+	"backend/internal/buddy"
+	"backend/internal/chat"
+	chatmessage "backend/internal/chat/message"
+	chatroom "backend/internal/chat/room"
 	"backend/internal/chat/websocket"
 	"backend/internal/task"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func main() {
+	// DB接続
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatalf("failed to open db: %v", err)
 	}
 	defer db.Close()
 
+	// *sql.DBをsqlx.DBにラップ（authで使用）
+	sqlxDB := sqlx.NewDb(db, "postgres")
+
+	// 依存関係の組み立て（DI）
+	authRepo := auth.NewPostgresRepository(sqlxDB)
+	authService := auth.NewService(authRepo)
+	authHandler := auth.NewHandler(authService)
 	taskRepo := task.NewPostgresRepository(db)
 	taskSvc := task.NewService(taskRepo)
 	taskHandler := task.NewHandler(taskSvc)
 
+	buddyRepo := buddy.NewPostgresRepository(db)
+	buddySvc := buddy.NewService(buddyRepo)
+	buddyHandler := buddy.NewHandler(buddySvc)
+	buddy.StartMatchingJob(buddySvc)
+
+	roomRepo := chatroom.NewPostgresRepository(db)
+	roomSvc := chatroom.NewRoomService(roomRepo)
+	msgRepo := chatmessage.NewPostgresRepository(db)
+	msgSvc := chatmessage.NewMessageService(msgRepo)
+	chatHandler := chat.NewHandler(roomSvc, msgSvc)
+
+	// Ginルーター
 	r := gin.Default()
 
 	// 開発中はNext(3000)から叩くのでCORS許可
 	r.Use(cors.New(cors.Config{
-		AllowOrigins: []string{"http://localhost:3000"},
-		AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders: []string{"Origin", "Content-Type", "Authorization"},
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowCredentials: true,
 	}))
 
 	r.GET("/health", healthHandler)
+
+	// 認証不要
+	public := r.Group("/api/auth")
+	{
+		public.POST("/signup", authHandler.Signup)
+		public.POST("/login", authHandler.Login)
+	}
+
+	// 認証必要
+	protected := r.Group("/api")
+	protected.Use(auth.AuthMiddleware(authService))
+	{
+		protected.POST("/auth/logout", authHandler.Logout)
+		protected.GET("/auth/me", authHandler.Me)
+
+		// チャット
+		protected.GET("/rooms", chatHandler.GetRooms)
+		protected.GET("/rooms/:id/messages", chatHandler.GetMessages)
+
+		// バディ
+		buddyGroup := protected.Group("/buddy")
+		{
+			buddyGroup.GET("/profile", buddyHandler.GetProfile)
+			buddyGroup.PUT("/profile", buddyHandler.UpsertProfile)
+			buddyGroup.GET("/queue", buddyHandler.GetQueueStatus)
+			buddyGroup.POST("/queue", buddyHandler.JoinQueue)
+			buddyGroup.DELETE("/queue", buddyHandler.LeaveQueue)
+			buddyGroup.GET("/relationships", buddyHandler.GetRelationships)
+			buddyGroup.DELETE("/relationships/:id", buddyHandler.EndRelationship)
+			buddyGroup.GET("/capacity", buddyHandler.GetCapacity)
+		}
+
+		// アクションアイテム
+		actionItems := protected.Group("/v1/action-items")
+		{
+			actionItems.POST("", taskHandler.Create)
+			actionItems.GET("", taskHandler.List)
+			actionItems.GET("/:uuid", taskHandler.Get)
+			actionItems.PUT("/:uuid", taskHandler.Update)
+			actionItems.DELETE("/:uuid", taskHandler.Delete)
+		}
+	}
 
 	hub := websocket.NewHub()
 	go hub.Run()
 
 	r.GET("/ws", func(c *gin.Context) {
-		websocket.ServeWs(hub, c.Writer, c.Request)
+		websocket.ServeWs(hub, authService, roomSvc, msgSvc, c.Writer, c.Request)
 	})
-
-	v1 := r.Group("/api/v1")
-	{
-		actionItems := v1.Group("/action-items")
-		actionItems.POST("", taskHandler.Create)
-		actionItems.GET("", taskHandler.List)
-		actionItems.GET("/:uuid", taskHandler.Get)
-		actionItems.PUT("/:uuid", taskHandler.Update)
-		actionItems.DELETE("/:uuid", taskHandler.Delete)
-	}
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"net/http"
 
+	"backend/internal/auth"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -28,11 +30,20 @@ func NewHandler(svc Service) *Handler {
 // @Failure      500   {object}  map[string]string
 // @Router       /api/v1/action-items [post]
 func (h *Handler) Create(c *gin.Context) {
+	user, ok := auth.GetCurrentUserFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
 	var req CreateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	// セッションユーザーIDで上書き（クライアント送信値を無視）
+	req.UserID = user.ID.String()
 
 	item, err := h.svc.Create(c.Request.Context(), &req)
 	if err != nil {
@@ -54,13 +65,27 @@ func (h *Handler) Create(c *gin.Context) {
 // @Failure      500      {object}  map[string]string
 // @Router       /api/v1/action-items [get]
 func (h *Handler) List(c *gin.Context) {
-	userID, err := uuid.Parse(c.Query("user_id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user_id"})
+	user, ok := auth.GetCurrentUserFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
-	items, err := h.svc.ListByUserID(c.Request.Context(), userID)
+	var items []*ActionItem
+	var err error
+
+	targetParam := c.Query("target_user_id")
+	if targetParam != "" {
+		targetID, parseErr := uuid.Parse(targetParam)
+		if parseErr != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid target_user_id"})
+			return
+		}
+		items, err = h.svc.ListForUser(c.Request.Context(), user.ID, targetID)
+	} else {
+		items, err = h.svc.ListByUserID(c.Request.Context(), user.ID)
+	}
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
