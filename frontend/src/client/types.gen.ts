@@ -30,7 +30,7 @@ export type TaskCreateRequest = {
   start_time: string
   status: TaskActionItemStatus
   title: string
-  user_id: string
+  user_id?: string
 }
 
 export type TaskUpdateRequest = {

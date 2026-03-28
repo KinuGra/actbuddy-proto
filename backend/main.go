@@ -103,6 +103,16 @@ func main() {
 			buddyGroup.DELETE("/relationships/:id", buddyHandler.EndRelationship)
 			buddyGroup.GET("/capacity", buddyHandler.GetCapacity)
 		}
+
+		// アクションアイテム
+		actionItems := protected.Group("/v1/action-items")
+		{
+			actionItems.POST("", taskHandler.Create)
+			actionItems.GET("", taskHandler.List)
+			actionItems.GET("/:uuid", taskHandler.Get)
+			actionItems.PUT("/:uuid", taskHandler.Update)
+			actionItems.DELETE("/:uuid", taskHandler.Delete)
+		}
 	}
 
 	hub := websocket.NewHub()
@@ -111,16 +121,6 @@ func main() {
 	r.GET("/ws", func(c *gin.Context) {
 		websocket.ServeWs(hub, authService, roomSvc, msgSvc, c.Writer, c.Request)
 	})
-
-	v1 := r.Group("/api/v1")
-	{
-		actionItems := v1.Group("/action-items")
-		actionItems.POST("", taskHandler.Create)
-		actionItems.GET("", taskHandler.List)
-		actionItems.GET("/:uuid", taskHandler.Get)
-		actionItems.PUT("/:uuid", taskHandler.Update)
-		actionItems.DELETE("/:uuid", taskHandler.Delete)
-	}
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 

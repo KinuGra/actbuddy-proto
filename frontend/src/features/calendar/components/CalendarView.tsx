@@ -8,15 +8,16 @@ import {
 } from 'react-big-calendar'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { localizer } from '../lib/calendarLocalizer'
-import { getEffectiveUserId } from '../lib/effectiveUserId'
 import {
   type ActionItem,
   type ActionItemStatus,
   type CalendarView,
 } from '../types/calendar'
+import type { PartnerInfo } from '../hooks/useCalendar'
 import { AddActionItemDialog } from './AddActionItemDialog'
 import { ActionItemCard } from './ActionItemCard'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import {
   Dialog,
   DialogContent,
@@ -44,11 +45,13 @@ function toCalendarEvent(item: ActionItem): CalendarEvent {
 }
 
 const statusColors: Record<ActionItemStatus, string> = {
-  not_started: '#3b82f6',
-  completed: '#22c55e',
-  progress_70: '#4ade80',
-  progress_30: '#eab308',
+  not_started: '#2563eb', // blue-600
+  completed: '#16a34a',   // green-600
+  progress_70: '#0d9488', // teal-600
+  progress_30: '#f97316', // orange-500
 }
+
+const BREAK_COLOR = '#94a3b8'
 
 const VIEW_LABELS: Record<View, string> = {
   month: '月',
@@ -133,6 +136,10 @@ interface CalendarViewProps {
   onAddItem: (item: Omit<ActionItem, 'id' | 'createdAt'>) => void
   onUpdateStatus: (id: string, status: ActionItemStatus) => void
   onDelete: (id: string) => void
+  currentUserId: string | null
+  partners: PartnerInfo[]
+  visibleUserIds: Set<string>
+  onToggleUser: (userId: string) => void
 }
 
 export function CalendarView({
@@ -144,8 +151,11 @@ export function CalendarView({
   onAddItem,
   onUpdateStatus,
   onDelete,
+  currentUserId,
+  partners,
+  visibleUserIds,
+  onToggleUser,
 }: CalendarViewProps) {
-  const effectiveUserId = getEffectiveUserId()
   const [dialogSlot, setDialogSlot] = useState<{
     start: Date
     end: Date
@@ -155,21 +165,23 @@ export function CalendarView({
   const calendarEvents = events.map(toCalendarEvent)
 
   const eventPropGetter = useCallback(
-    (event: CalendarEvent) => ({
-      style: {
-        backgroundColor: statusColors[event.resource.status],
-        opacity:
-          event.resource.userId !== effectiveUserId ? 0.7 : 1,
-        border:
-          event.resource.userId !== effectiveUserId
-            ? '2px dashed rgba(0,0,0,0.3)'
-            : 'none',
-        borderRadius: '4px',
-        color: '#fff',
-        fontSize: '0.75rem',
-      },
-    }),
-    [effectiveUserId]
+    (event: CalendarEvent) => {
+      const isBreak = event.resource.kind === 'break'
+      const isOwn = event.resource.userId === currentUserId
+      return {
+        style: {
+          backgroundColor: isBreak
+            ? BREAK_COLOR
+            : statusColors[event.resource.status],
+          opacity: isOwn ? 1 : 0.7,
+          border: isOwn ? 'none' : '2px dashed rgba(0,0,0,0.3)',
+          borderRadius: '4px',
+          color: '#fff',
+          fontSize: '0.75rem',
+        },
+      }
+    },
+    [currentUserId]
   )
 
   const handleSelectSlot = useCallback((slot: SlotInfo) => {
@@ -188,6 +200,34 @@ export function CalendarView({
 
   return (
     <div className="flex flex-col h-full min-h-0">
+      {/* 表示フィルター */}
+      {(currentUserId || partners.length > 0) && (
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
+          <span className="text-sm text-muted-foreground">表示:</span>
+          {currentUserId && (
+            <Badge
+              variant={visibleUserIds.has(currentUserId) ? 'default' : 'outline'}
+              className="cursor-pointer select-none"
+              onClick={() => onToggleUser(currentUserId)}
+            >
+              自分
+            </Badge>
+          )}
+          {partners.map((p) => (
+            <Badge
+              key={p.id}
+              variant={visibleUserIds.has(p.id) ? 'default' : 'outline'}
+              className="cursor-pointer select-none"
+              onClick={() => onToggleUser(p.id)}
+            >
+              {p.displayName}
+              <span className="ml-1 text-xs opacity-70">
+                {p.type === 'buddy' ? 'バディ' : 'フレンド'}
+              </span>
+            </Badge>
+          ))}
+        </div>
+      )}
       <div className="flex-1 min-h-0">
         <div className="h-[92%]">
           <Calendar<CalendarEvent>
@@ -260,7 +300,7 @@ export function CalendarView({
                 onDelete(id)
                 setSelectedItem(null)
               }}
-              isOwnItem={selectedItem.userId === effectiveUserId}
+              isOwnItem={selectedItem.userId === currentUserId}
             />
           )}
         </DialogContent>

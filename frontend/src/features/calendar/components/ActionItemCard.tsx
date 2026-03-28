@@ -19,16 +19,16 @@ interface ActionItemCardProps {
 }
 
 const statusConfig = {
-  not_started: { label: '予定', color: 'bg-blue-500', icon: Circle },
-  completed: { label: '完了', color: 'bg-green-500', icon: CheckCircle2 },
+  not_started: { label: '予定', color: 'bg-blue-600', icon: Circle },
+  completed: { label: '完了！', color: 'bg-green-600', icon: CheckCircle2 },
   progress_70: {
-    label: '70%以上達成',
-    color: 'bg-green-400',
+    label: 'だいぶできた',
+    color: 'bg-teal-600',
     icon: CheckCircle2,
   },
   progress_30: {
-    label: '30%以上達成',
-    color: 'bg-yellow-500',
+    label: 'あまりできなかった',
+    color: 'bg-orange-500',
     icon: CheckCircle2,
   },
 }
@@ -52,7 +52,7 @@ export function ActionItemCard({
               <h3 className="font-semibold truncate">{item.title}</h3>
               {!isOwnItem && (
                 <Badge variant="outline" className="text-xs">
-                  バディ
+                  {item.ownerName ?? 'バディ'}
                 </Badge>
               )}
             </div>
@@ -78,30 +78,34 @@ export function ActionItemCard({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem
-                  onClick={() => onStatusChange(item.id, 'completed')}
-                >
-                  <CheckCircle2 className="w-4 h-4 mr-2 text-green-500" />
-                  完了
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => onStatusChange(item.id, 'progress_70')}
-                >
-                  <CheckCircle2 className="w-4 h-4 mr-2 text-green-400" />
-                  70%以上達成
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => onStatusChange(item.id, 'progress_30')}
-                >
-                  <CheckCircle2 className="w-4 h-4 mr-2 text-yellow-500" />
-                  30%以上達成
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => onStatusChange(item.id, 'not_started')}
-                >
-                  <Circle className="w-4 h-4 mr-2 text-blue-500" />
-                  予定に戻す
-                </DropdownMenuItem>
+                {item.kind !== 'break' && (
+                  <>
+                    <DropdownMenuItem
+                      onClick={() => onStatusChange(item.id, 'completed')}
+                    >
+                      <CheckCircle2 className="w-4 h-4 mr-2 text-green-600" />
+                      完了！
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => onStatusChange(item.id, 'progress_70')}
+                    >
+                      <CheckCircle2 className="w-4 h-4 mr-2 text-teal-600" />
+                      だいぶできた
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => onStatusChange(item.id, 'progress_30')}
+                    >
+                      <CheckCircle2 className="w-4 h-4 mr-2 text-orange-500" />
+                      あまりできなかった
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => onStatusChange(item.id, 'not_started')}
+                    >
+                      <Circle className="w-4 h-4 mr-2 text-blue-600" />
+                      予定に戻す
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuItem
                   onClick={() => onDelete(item.id)}
                   className="text-destructive"

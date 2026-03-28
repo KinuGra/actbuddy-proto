@@ -1,6 +1,14 @@
 'use client'
+import dynamic from 'next/dynamic'
 import { useCalendar } from '@/features/calendar/hooks/useCalendar'
-import { CalendarView } from '@/features/calendar/components/CalendarView'
+
+const CalendarView = dynamic(
+  () =>
+    import('@/features/calendar/components/CalendarView').then(
+      (m) => m.CalendarView
+    ),
+  { ssr: false }
+)
 
 export default function Calendar() {
   const {
@@ -9,6 +17,10 @@ export default function Calendar() {
     selectedDate,
     setSelectedDate,
     actionItems,
+    currentUserId,
+    partners,
+    visibleUserIds,
+    toggleUserVisibility,
     addActionItem,
     updateActionItemStatus,
     deleteActionItem,
@@ -37,6 +49,10 @@ export default function Calendar() {
         onAddItem={addActionItem}
         onUpdateStatus={updateActionItemStatus}
         onDelete={deleteActionItem}
+        currentUserId={currentUserId}
+        partners={partners}
+        visibleUserIds={visibleUserIds}
+        onToggleUser={toggleUserVisibility}
       />
     </div>
   )

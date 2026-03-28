@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import {
@@ -58,8 +58,13 @@ const API_BASE_URL =
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const router = useRouter()
   const currentUser = useCurrentUser()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleLogout = async () => {
     await fetch(`${API_BASE_URL}/api/auth/logout`, {
@@ -146,11 +151,11 @@ export function Header() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-bold hover:opacity-80 transition-opacity">
-                    {currentUser?.display_name.charAt(0) ?? '?'}
+                    {mounted ? (currentUser?.display_name.charAt(0) ?? '?') : '?'}
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>{currentUser?.display_name ?? ''}</DropdownMenuLabel>
+                  <DropdownMenuLabel>{mounted ? (currentUser?.display_name ?? '') : ''}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
                     <UserCircle className="w-4 h-4 mr-2" />
