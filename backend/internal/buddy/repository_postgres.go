@@ -79,10 +79,22 @@ func (r *postgresRepository) JoinQueue(ctx context.Context, userID uuid.UUID) (*
 	// 既存エントリ確認
 	existing, err := r.GetQueueEntry(ctx, userID)
 	if err == nil {
-		if existing.Status == "waiting" || existing.Status == "matched" {
+		if existing.Status == "waiting" {
 			return nil, ErrAlreadyInQueue
 		}
-		// cancelled → 再参加
+		if existing.Status == "matched" {
+			// アクティブなバディ関係が残っている場合のみブロック
+			var activeCount int
+			_ = r.db.QueryRowContext(ctx, `
+				SELECT COUNT(*) FROM buddy_relationships
+				WHERE (user_id_1 = $1 OR user_id_2 = $1) AND status = 'active'
+			`, userID).Scan(&activeCount)
+			if activeCount > 0 {
+				return nil, ErrAlreadyInQueue
+			}
+			// バディ解消済み → 再参加を許可（cancelledと同様に扱う）
+		}
+		// cancelled または matched（バディ解消済み）→ 再参加
 		q := &MatchingQueue{}
 		err = r.db.QueryRowContext(ctx, `
 			UPDATE matching_queue
@@ -268,12 +280,35 @@ func (r *postgresRepository) GetRelationshipByID(ctx context.Context, id uuid.UU
 }
 
 func (r *postgresRepository) EndRelationship(ctx context.Context, id uuid.UUID) error {
-	_, err := r.db.ExecContext(ctx, `
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// バディ関係を ended に
+	var userID1, userID2 uuid.UUID
+	err = tx.QueryRowContext(ctx, `
 		UPDATE buddy_relationships
 		SET status = 'ended', ended_at = NOW()
 		WHERE id = $1
-	`, id)
-	return err
+		RETURNING user_id_1, user_id_2
+	`, id).Scan(&userID1, &userID2)
+	if err != nil {
+		return err
+	}
+
+	// 両ユーザーのキューエントリを cancelled にリセット（再参加できるように）
+	_, err = tx.ExecContext(ctx, `
+		UPDATE matching_queue
+		SET status = 'cancelled'
+		WHERE user_id IN ($1, $2) AND status = 'matched'
+	`, userID1, userID2)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func (r *postgresRepository) HasExistingRelationship(ctx context.Context, userID1, userID2 uuid.UUID) (bool, error) {
