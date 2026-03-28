@@ -70,17 +70,22 @@
 5. 成立 → buddy_relationships 作成 → チャットルーム自動作成 → 両者に通知
 ```
 
-### API（未実装）
+### API
 
 | メソッド | パス | 説明 | 認証 |
 |---|---|---|---|
 | GET | `/api/buddy/profile` | 自分のプロフィール取得 | 必要 |
 | PUT | `/api/buddy/profile` | プロフィール更新 | 必要 |
-| POST | `/api/buddy/matching/join` | マッチングキューに参加 | 必要 |
-| DELETE | `/api/buddy/matching/leave` | マッチングキューから離脱 | 必要 |
-| GET | `/api/buddy/matching/status` | 自分のキュー状態確認 | 必要 |
-| GET | `/api/buddy/relationships` | バディ・フレンド一覧 | 必要 |
-| POST | `/api/buddy/relationships/{id}/end` | バディ期間終了（フレンドになるかを選択） | 必要 |
+| POST | `/api/buddy/queue` | マッチングキューに参加 | 必要 |
+| DELETE | `/api/buddy/queue` | マッチングキューから離脱 | 必要 |
+| GET | `/api/buddy/queue` | 自分のキュー状態確認 | 必要 |
+| GET | `/api/buddy/relationships` | アクティブなバディ一覧 | 必要 |
+| DELETE | `/api/buddy/relationships/{id}` | バディ関係を解消（キューも自動リセット） | 必要 |
+| GET | `/api/buddy/capacity` | バディ上限数・達成率取得 | 必要 |
+
+### バグ修正履歴
+
+- **バディ解消後に再マッチングできない問題**: `EndRelationship` をトランザクション化し、バディ解消時に両ユーザーの `matching_queue.status` を `'matched'` → `'cancelled'` にリセットするよう修正
 
 アルゴリズム詳細は `docs/matching-algorithm.md` を参照。
 
@@ -133,6 +138,7 @@
 
 - [x] `user_id` に外部キー制約を追加（migration 000003）
 - [x] `kind = 'break'` のフロント表示対応（色分け、ステータス変更UI非表示）
+- [x] `kind = 'break'` の登録UI対応（Action Item追加ダイアログに種別選択を追加）
 - [x] バディ・フレンドの Action Item を取得するAPI（`FindByUserIDAsPartner` でbuddy/friend_relationships JOIN）
 - [x] カレンダー上でのステータス変更UI（肯定的文言：「だいぶできた」等）
 - [x] 月・週・日ビュー切り替え
