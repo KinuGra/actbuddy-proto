@@ -1,14 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Users, Calendar, Target, TrendingUp, ArrowRight } from 'lucide-react'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Users, Calendar, Target, TrendingUp, ChevronRight } from 'lucide-react'
+import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import Link from 'next/link'
@@ -80,151 +74,132 @@ export default function HomeMain() {
   const displayName = mounted ? (currentUser?.display_name ?? '') : ''
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        {/* グリーティング */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-1">
-            {displayName ? `こんにちは、${displayName}さん` : 'ダッシュボード'}
-          </h1>
-          <p className="text-muted-foreground">今日も一緒に目標に向かって進みましょう</p>
-        </div>
+    <div className="container mx-auto px-4 py-6 max-w-2xl">
 
-        {/* ステータスカード */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          {/* 達成率 */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-primary/15 rounded-xl">
-                  <TrendingUp className="w-5 h-5 text-primary" />
-                </div>
-                <p className="text-sm text-muted-foreground">直近7日の達成率</p>
-              </div>
-              <p className="text-3xl font-bold mb-2">
-                {achievementRate !== null ? `${achievementRate}%` : '—'}
-              </p>
-              {achievementRate !== null && (
-                <Progress value={achievementRate} className="h-2" />
-              )}
-            </CardContent>
-          </Card>
-
-          {/* バディ枠 */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-sky-500/15 rounded-xl">
-                  <Users className="w-5 h-5 text-sky-600" />
-                </div>
-                <p className="text-sm text-muted-foreground">バディ</p>
-              </div>
-              <p className="text-3xl font-bold mb-1">
-                {capacity !== null
-                  ? `${capacity.current_count} / ${capacity.max_count}`
-                  : '—'}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {capacity !== null ? `上限 ${capacity.max_count}人` : '読み込み中...'}
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* 今日のAction Item */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-emerald-500/15 rounded-xl">
-                  <Calendar className="w-5 h-5 text-emerald-600" />
-                </div>
-                <p className="text-sm text-muted-foreground">今日のタスク</p>
-              </div>
-              <p className="text-3xl font-bold mb-1">
-                {todayStats !== null
-                  ? `${todayStats.completed} / ${todayStats.total}`
-                  : '—'}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {todayStats !== null
-                  ? `${todayStats.total}件中${todayStats.completed}件完了`
-                  : '読み込み中...'}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* 目標 */}
-        {profile && profile.goal_types.length > 0 && (
-          <Card className="mb-8">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Target className="w-5 h-5 text-primary" />
-                  <CardTitle className="text-base">設定中の目標</CardTitle>
-                </div>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/matching" className="flex items-center gap-1 text-xs">
-                    プロフィールを編集
-                    <ArrowRight className="w-3 h-3" />
-                  </Link>
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {profile.goal_types.map((goal) => (
-                  <span
-                    key={goal}
-                    className="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full"
-                  >
-                    {goal}
-                  </span>
-                ))}
-              </div>
-              {profile.bio && (
-                <p className="mt-3 text-sm text-muted-foreground">{profile.bio}</p>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* クイックアクション */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <Link href="/matching">
-              <CardHeader className="pb-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Users className="w-7 h-7 text-primary" />
-                    <div>
-                      <CardTitle className="text-base">バディを探す</CardTitle>
-                      <CardDescription>目標が近い人とマッチング</CardDescription>
-                    </div>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                </div>
-              </CardHeader>
-            </Link>
-          </Card>
-
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <Link href="/calendar">
-              <CardHeader className="pb-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Calendar className="w-7 h-7 text-primary" />
-                    <div>
-                      <CardTitle className="text-base">カレンダー</CardTitle>
-                      <CardDescription>Action Itemを管理する</CardDescription>
-                    </div>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                </div>
-              </CardHeader>
-            </Link>
-          </Card>
-        </div>
+      {/* グリーティング */}
+      <div className="mb-5">
+        <p className="text-xs text-muted-foreground mb-0.5">おかえりなさい</p>
+        <h1 className="text-xl font-semibold">
+          {displayName ? `${displayName}さん` : 'ダッシュボード'}
+        </h1>
       </div>
+
+      {/* ステータスカード */}
+      <div className="grid grid-cols-3 gap-2.5 mb-4">
+        <Card>
+          <div className="p-4">
+            <div className="flex items-center gap-1.5 mb-2.5">
+              <div className="p-1.5 bg-primary/12 rounded-lg">
+                <TrendingUp className="w-3.5 h-3.5 text-primary" />
+              </div>
+              <p className="text-xs text-muted-foreground">達成率</p>
+            </div>
+            <p className="text-2xl font-semibold tabular-nums tracking-tight">
+              {achievementRate !== null ? `${achievementRate}%` : '—'}
+            </p>
+            {achievementRate !== null && (
+              <Progress value={achievementRate} className="h-1 mt-2.5" />
+            )}
+          </div>
+        </Card>
+
+        <Card>
+          <div className="p-4">
+            <div className="flex items-center gap-1.5 mb-2.5">
+              <div className="p-1.5 bg-sky-500/12 rounded-lg">
+                <Users className="w-3.5 h-3.5 text-sky-600" />
+              </div>
+              <p className="text-xs text-muted-foreground">バディ</p>
+            </div>
+            <p className="text-2xl font-semibold tabular-nums tracking-tight">
+              {capacity !== null ? capacity.current_count : '—'}
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {capacity !== null ? `/ ${capacity.max_count} 人` : '\u00a0'}
+            </p>
+          </div>
+        </Card>
+
+        <Card>
+          <div className="p-4">
+            <div className="flex items-center gap-1.5 mb-2.5">
+              <div className="p-1.5 bg-emerald-500/12 rounded-lg">
+                <Calendar className="w-3.5 h-3.5 text-emerald-600" />
+              </div>
+              <p className="text-xs text-muted-foreground">今日</p>
+            </div>
+            <p className="text-2xl font-semibold tabular-nums tracking-tight">
+              {todayStats !== null ? todayStats.completed : '—'}
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {todayStats !== null ? `/ ${todayStats.total} 件` : '\u00a0'}
+            </p>
+          </div>
+        </Card>
+      </div>
+
+      {/* 目標 */}
+      {profile && profile.goal_types.length > 0 && (
+        <Card className="mb-4">
+          <div className="px-4 py-3.5">
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="flex items-center gap-1.5">
+                <Target className="w-3.5 h-3.5 text-primary" />
+                <span className="text-xs font-medium text-muted-foreground">設定中の目標</span>
+              </div>
+              <Button variant="ghost" size="sm" asChild className="h-6 text-xs px-2 -mr-1">
+                <Link href="/matching">編集</Link>
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {profile.goal_types.map((goal) => (
+                <span
+                  key={goal}
+                  className="px-2.5 py-0.5 bg-primary/10 text-primary text-xs rounded-full"
+                >
+                  {goal}
+                </span>
+              ))}
+            </div>
+            {profile.bio && (
+              <p className="mt-2 text-xs text-muted-foreground">{profile.bio}</p>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {/* クイックアクション */}
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+        クイックアクション
+      </p>
+      <div className="flex flex-col gap-2">
+        <Card className="hover:bg-secondary/50 transition-colors cursor-pointer">
+          <Link href="/matching" className="flex items-center gap-3 px-4 py-3.5">
+            <div className="p-2 bg-primary/12 rounded-xl shrink-0">
+              <Users className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium leading-snug">バディを探す</p>
+              <p className="text-xs text-muted-foreground">目標が近い人とマッチング</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground/50 shrink-0" />
+          </Link>
+        </Card>
+
+        <Card className="hover:bg-secondary/50 transition-colors cursor-pointer">
+          <Link href="/calendar" className="flex items-center gap-3 px-4 py-3.5">
+            <div className="p-2 bg-emerald-500/12 rounded-xl shrink-0">
+              <Calendar className="w-4 h-4 text-emerald-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium leading-snug">カレンダー</p>
+              <p className="text-xs text-muted-foreground">Action Itemを管理する</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground/50 shrink-0" />
+          </Link>
+        </Card>
+      </div>
+
     </div>
   )
 }

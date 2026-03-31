@@ -3,9 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Users, Clock, CheckCircle, UserX } from 'lucide-react'
+import { Users, Clock, MessageSquare, UserX } from 'lucide-react'
 import { useMatching } from '../hooks/useMatching'
 import { useBuddyProfile } from '../hooks/useBuddyProfile'
 import { BuddyProfileForm } from './BuddyProfileForm'
@@ -50,7 +50,7 @@ export default function MatchingMain() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8 text-center text-muted-foreground">
+      <div className="container mx-auto px-4 py-8 text-center text-muted-foreground text-sm">
         読み込み中...
       </div>
     )
@@ -59,69 +59,70 @@ export default function MatchingMain() {
   const inQueue = queueStatus?.in_queue && queueStatus.status === 'waiting'
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold mb-2">バディを探す</h1>
-        <p className="text-muted-foreground">目標や活動時間が近い人と自動でマッチングします</p>
+    <div className="container mx-auto px-4 py-6 max-w-xl space-y-5">
+
+      <div>
+        <h1 className="text-xl font-semibold">バディを探す</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">目標や活動時間が近い人と自動でマッチングします</p>
       </div>
 
       {actionError && (
-        <div className="max-w-2xl mx-auto bg-destructive/10 text-destructive rounded-md px-4 py-3 text-sm">
+        <div className="bg-destructive/10 text-destructive rounded-lg px-4 py-3 text-sm">
           {actionError}
         </div>
       )}
 
       {/* バディ上限 */}
       {capacity && (
-        <Card className="max-w-2xl mx-auto">
-          <CardContent className="flex items-center justify-between py-4">
+        <Card>
+          <div className="flex items-center justify-between px-4 py-3.5">
             <div className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-primary" />
-              <span className="font-medium">現在のバディ数</span>
+              <Users className="w-4 h-4 text-primary" />
+              <span className="text-sm font-medium">現在のバディ数</span>
             </div>
             <div className="text-right">
-              <span className="text-2xl font-bold">{capacity.current_count}</span>
-              <span className="text-muted-foreground"> / {capacity.max_count} 人</span>
+              <span className="text-lg font-semibold tabular-nums">{capacity.current_count}</span>
+              <span className="text-muted-foreground text-sm"> / {capacity.max_count} 人</span>
               <p className="text-xs text-muted-foreground">
                 達成率 {Math.round(capacity.achievement_rate * 100)}%
               </p>
             </div>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {/* プロフィール設定 */}
-      <div className="max-w-2xl mx-auto">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold">プロフィール</h2>
-          <Button variant="outline" size="sm" onClick={() => setShowProfileForm((v) => !v)}>
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">プロフィール</p>
+          <Button variant="ghost" size="sm" className="h-6 text-xs px-2" onClick={() => setShowProfileForm((v) => !v)}>
             {showProfileForm ? '閉じる' : profile ? '編集' : '設定する'}
           </Button>
         </div>
 
         {!profile && !showProfileForm && (
           <Card>
-            <CardContent className="py-6 text-center text-muted-foreground text-sm">
+            <div className="px-4 py-4 text-center text-sm text-muted-foreground">
               マッチングに参加するにはプロフィールを設定してください
-            </CardContent>
+            </div>
           </Card>
         )}
 
         {profile && !showProfileForm && (
           <Card>
-            <CardContent className="py-4 space-y-3">
+            <div className="px-4 py-3.5 space-y-2.5">
               {profile.bio && <p className="text-sm">{profile.bio}</p>}
               <div className="flex flex-wrap gap-1">
                 {profile.goal_types.map((g) => (
-                  <Badge key={g} variant="default">{g}</Badge>
+                  <Badge key={g} variant="default" className="text-xs">{g}</Badge>
                 ))}
               </div>
               <div className="flex flex-wrap gap-1">
                 {profile.active_times.map((t) => (
-                  <Badge key={t} variant="secondary">{t}</Badge>
+                  <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>
                 ))}
               </div>
-            </CardContent>
+            </div>
           </Card>
         )}
 
@@ -138,90 +139,91 @@ export default function MatchingMain() {
 
       {/* キュー操作 */}
       {profile && (
-        <div className="max-w-2xl mx-auto">
-          <Card>
-            <CardContent className="flex flex-col items-center py-8 space-y-4">
-              {inQueue ? (
-                <>
-                  <div className="flex items-center gap-2 text-primary">
-                    <Clock className="w-6 h-6 animate-pulse" />
-                    <span className="font-semibold text-lg">マッチング待機中</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground text-center">
-                    バディが見つかると通知でお知らせします
-                    {queueStatus?.expires_at && (
-                      <span className="block">
-                        有効期限: {new Date(queueStatus.expires_at).toLocaleDateString('ja-JP')}
-                      </span>
-                    )}
-                  </p>
-                  <Button variant="outline" onClick={handleLeaveQueue}>
-                    キャンセル
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Users className="w-8 h-8 text-primary" />
-                  </div>
-                  <p className="text-sm text-muted-foreground text-center max-w-xs">
-                    マッチングキューに参加すると、1時間ごとに自動でバディを探します
-                  </p>
-                  <Button
-                    onClick={handleJoinQueue}
-                    disabled={!capacity || capacity.current_count >= capacity.max_count}
-                  >
-                    マッチングに参加する
-                  </Button>
-                  {capacity && capacity.current_count >= capacity.max_count && (
-                    <p className="text-xs text-muted-foreground">バディの上限数に達しています</p>
+        <Card>
+          <div className="flex flex-col items-center px-4 py-6 gap-3">
+            {inQueue ? (
+              <>
+                <div className="flex items-center gap-2 text-primary">
+                  <Clock className="w-5 h-5 animate-pulse" />
+                  <span className="font-medium">マッチング待機中</span>
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  バディが見つかると通知でお知らせします
+                  {queueStatus?.expires_at && (
+                    <span className="block mt-0.5">
+                      有効期限: {new Date(queueStatus.expires_at).toLocaleDateString('ja-JP')}
+                    </span>
                   )}
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                </p>
+                <Button variant="outline" size="sm" onClick={handleLeaveQueue}>
+                  キャンセル
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                  <Users className="w-6 h-6 text-primary" />
+                </div>
+                <p className="text-xs text-muted-foreground text-center max-w-xs">
+                  マッチングキューに参加すると、1時間ごとに自動でバディを探します
+                </p>
+                <Button
+                  onClick={handleJoinQueue}
+                  disabled={!capacity || capacity.current_count >= capacity.max_count}
+                >
+                  マッチングに参加する
+                </Button>
+                {capacity && capacity.current_count >= capacity.max_count && (
+                  <p className="text-xs text-muted-foreground">バディの上限数に達しています</p>
+                )}
+              </>
+            )}
+          </div>
+        </Card>
       )}
 
       {/* アクティブなバディ一覧 */}
       {relationships.length > 0 && (
-        <div className="max-w-2xl mx-auto space-y-3">
-          <h2 className="text-lg font-semibold">現在のバディ</h2>
-          {relationships.map((rel) => (
-            <Card key={rel.id}>
-              <CardContent className="flex items-center justify-between py-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-semibold text-primary">
-                    {rel.partner.display_name.charAt(0)}
+        <div>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">現在のバディ</p>
+          <div className="flex flex-col gap-2">
+            {relationships.map((rel) => (
+              <Card key={rel.id}>
+                <div className="flex items-center justify-between px-4 py-3.5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center font-semibold text-primary text-sm">
+                      {rel.partner.display_name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{rel.partner.display_name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(rel.ends_at).toLocaleDateString('ja-JP')} まで
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium">{rel.partner.display_name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      終了: {new Date(rel.ends_at).toLocaleDateString('ja-JP')}
-                    </p>
+                  <div className="flex gap-1.5">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs"
+                      onClick={() => router.push(`/chat?room=${rel.room_id}`)}
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 mr-1" />
+                      チャット
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => handleEndRelationship(rel.id)}
+                    >
+                      <UserX className="w-3.5 h-3.5" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => router.push(`/chat?room=${rel.room_id}`)}
-                  >
-                    <CheckCircle className="w-4 h-4 mr-1" />
-                    チャット
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => handleEndRelationship(rel.id)}
-                  >
-                    <UserX className="w-4 h-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+              </Card>
+            ))}
+          </div>
         </div>
       )}
     </div>
