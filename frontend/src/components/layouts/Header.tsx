@@ -86,14 +86,14 @@ export function Header() {
         />
       )}
 
-      <header className="border-b bg-background relative z-20">
-        <div className="container mx-auto px-4 py-4">
+      <header className="border-b border-border/60 bg-card/80 backdrop-blur-sm relative z-20">
+        <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <Users className="w-6 h-6 text-primary-foreground" />
+            <Link href="/dashboard" className="flex items-center gap-2.5">
+              <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center shadow-sm">
+                <Users className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold">ActBuddy</span>
+              <span className="text-lg font-semibold tracking-tight">ActBuddy</span>
             </Link>
 
             {/* Desktop Navigation */}

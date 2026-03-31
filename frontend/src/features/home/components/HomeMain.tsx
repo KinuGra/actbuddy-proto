@@ -96,7 +96,7 @@ export default function HomeMain() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
+                <div className="p-2 bg-primary/15 rounded-xl">
                   <TrendingUp className="w-5 h-5 text-primary" />
                 </div>
                 <p className="text-sm text-muted-foreground">直近7日の達成率</p>
@@ -114,8 +114,8 @@ export default function HomeMain() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-blue-500/10 rounded-lg">
-                  <Users className="w-5 h-5 text-blue-500" />
+                <div className="p-2 bg-sky-500/15 rounded-xl">
+                  <Users className="w-5 h-5 text-sky-600" />
                 </div>
                 <p className="text-sm text-muted-foreground">バディ</p>
               </div>
@@ -134,8 +134,8 @@ export default function HomeMain() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-green-500/10 rounded-lg">
-                  <Calendar className="w-5 h-5 text-green-500" />
+                <div className="p-2 bg-emerald-500/15 rounded-xl">
+                  <Calendar className="w-5 h-5 text-emerald-600" />
                 </div>
                 <p className="text-sm text-muted-foreground">今日のタスク</p>
               </div>
@@ -195,7 +195,7 @@ export default function HomeMain() {
               <CardHeader className="pb-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Users className="w-8 h-8 text-primary" />
+                    <Users className="w-7 h-7 text-primary" />
                     <div>
                       <CardTitle className="text-base">バディを探す</CardTitle>
                       <CardDescription>目標が近い人とマッチング</CardDescription>
@@ -212,7 +212,7 @@ export default function HomeMain() {
               <CardHeader className="pb-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Calendar className="w-8 h-8 text-primary" />
+                    <Calendar className="w-7 h-7 text-primary" />
                     <div>
                       <CardTitle className="text-base">カレンダー</CardTitle>
                       <CardDescription>Action Itemを管理する</CardDescription>
