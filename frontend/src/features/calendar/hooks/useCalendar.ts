@@ -52,7 +52,7 @@ async function fetchActionItemsForUser(
 }
 
 export function useCalendar() {
-  const currentUser = useCurrentUser()
+  const { user: currentUser } = useCurrentUser()
   const [view, setView] = useState<CalendarView>('month')
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [ownItems, setOwnItems] = useState<ActionItem[]>([])
