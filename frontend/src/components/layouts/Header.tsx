@@ -71,6 +71,7 @@ export function Header() {
       credentials: 'include',
     })
     document.cookie = 'session_token=; path=/; max-age=0'
+    sessionStorage.removeItem('session_token')
     router.push('/login')
   }
 

@@ -16,9 +16,14 @@ const (
 // AuthMiddleware はセッションベースの認証ミドルウェア
 func AuthMiddleware(service *Service) gin.HandlerFunc { // gin.HandlerFuncにGinがcを自動で渡す
 	return func(c *gin.Context) {
-		// 1. Cookieからセッショントークンを取得
+		// 1. Cookie からセッショントークンを取得
+		// WebSocket アップグレードリクエストのみ、Cookie がない場合にクエリパラメータを許可
+		// （他のルートでクエリパラメータ経由のトークン漏洩リスクを避けるため限定）
 		token, err := c.Cookie(SessionCookieName)
-		if err != nil {
+		if (err != nil || token == "") && c.GetHeader("Upgrade") == "websocket" {
+			token = c.Query("token")
+		}
+		if token == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": "認証が必要です",
 			})

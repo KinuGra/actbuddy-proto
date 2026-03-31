@@ -13,6 +13,7 @@ type AuthResponse = {
 
 function setSessionCookie(token: string) {
   document.cookie = `session_token=${token}; path=/; max-age=86400`
+  sessionStorage.setItem('session_token', token)
 }
 
 export function useAuth() {
