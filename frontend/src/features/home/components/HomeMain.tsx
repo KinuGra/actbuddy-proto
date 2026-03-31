@@ -192,7 +192,7 @@ export default function HomeMain() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
             <Link href="/matching">
-              <CardHeader>
+              <CardHeader className="pb-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Users className="w-8 h-8 text-primary" />
@@ -209,7 +209,7 @@ export default function HomeMain() {
 
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
             <Link href="/calendar">
-              <CardHeader>
+              <CardHeader className="pb-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Calendar className="w-8 h-8 text-primary" />
