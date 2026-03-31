@@ -53,3 +53,9 @@ type UserResponse struct {
 	DisplayName string    `json:"display_name"`
 	CreatedAt   time.Time `json:"created_at"`
 }
+
+// AuthResponseはログイン・サインアップ時にクライアントに返すレスポンス
+type AuthResponse struct {
+	Token string       `json:"token"`
+	User  UserResponse `json:"user"`
+}
