@@ -7,8 +7,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080'
 const WS_BASE = API_BASE.replace(/^http/, 'ws')
 
 function getSessionToken(): string | null {
-  const match = document.cookie.match(/(^| )session_token=([^;]+)/)
-  return match ? match[2] : null
+  return sessionStorage.getItem('session_token')
 }
 
 export function useChat(initialRoomId?: string) {
@@ -63,14 +62,14 @@ export function useChat(initialRoomId?: string) {
       [roomId]: data.map((m) => ({
         id: String(m.id),
         roomId: m.room_id,
-        senderId: m.sender_id,
-        senderName: m.sender_name,
+        senderId: m.sender_id === currentUserId ? 'current' : m.sender_id,
+        senderName: m.sender_id === currentUserId ? 'あなた' : m.sender_name,
         content: m.content,
         timestamp: new Date(m.created_at),
         isRead: true,
       })),
     }))
-  }, [])
+  }, [currentUserId])
 
   // WebSocket からのメッセージを受信して state に反映
   const addMessage = useCallback(

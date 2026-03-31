@@ -32,6 +32,11 @@ export function ChatWindow({
   const [inputValue, setInputValue] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const wsRef = useRef<WebSocket | null>(null)
+  const onReceiveMessageRef = useRef(onReceiveMessage)
+
+  useEffect(() => {
+    onReceiveMessageRef.current = onReceiveMessage
+  }, [onReceiveMessage])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -42,7 +47,7 @@ export function ChatWindow({
     wsRef.current = ws
 
     ws.onopen = () => console.log('WebSocket opened')
-    ws.onmessage = (event) => onReceiveMessage(event.data)
+    ws.onmessage = (event) => onReceiveMessageRef.current(event.data)
     ws.onclose = () => console.log('WebSocket disconnected')
 
     return () => ws.close()
