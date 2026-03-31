@@ -70,6 +70,7 @@ export function Header() {
       method: 'POST',
       credentials: 'include',
     })
+    document.cookie = 'session_token=; path=/; max-age=0'
     router.push('/login')
   }
 
