@@ -38,8 +38,8 @@ func (h *Handler) Signup(c *gin.Context) {
 	// 3. Cookieをセット
 	setSessionCookie(c, token)
 
-	// 4. レスポンスを返す
-	c.JSON(http.StatusCreated, user)
+	// 4. レスポンスを返す（tokenをbodyにも含める）
+	c.JSON(http.StatusCreated, AuthResponse{Token: token, User: *user})
 }
 
 // Login POST /api/auth/login
@@ -61,7 +61,7 @@ func (h *Handler) Login(c *gin.Context) {
 	}
 
 	setSessionCookie(c, token)
-	c.JSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, AuthResponse{Token: token, User: *user})
 }
 
 // Logout POST /api/auth/logout
