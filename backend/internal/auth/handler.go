@@ -82,7 +82,6 @@ func (h *Handler) Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "ログアウトしました"})
 }
 
-// Me GET /api/auth/me
 func (h *Handler) Me(c *gin.Context) {
 	user, ok := GetCurrentUserFromContext(c)
 	if !ok {
@@ -90,6 +89,37 @@ func (h *Handler) Me(c *gin.Context) {
 		return
 	}
 
+	c.JSON(http.StatusOK, user)
+}
+
+// UpdateMe PUT /api/auth/me
+func (h *Handler) UpdateMe(c *gin.Context) {
+	// 1. Contextから現在ログイン中のユーザー情報を取得
+	currentUser, ok := GetCurrentUserFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "認証が必要です"})
+		return
+	}
+
+	// 2. リクエストボディをパース
+	var req UpdateMeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "リクエストが不正です"})
+		return
+	}
+
+	// 3. サービス層を呼ぶ
+	user, err := h.service.UpdateMe(c.Request.Context(), currentUser.ID, req)
+	if err != nil {
+		if err == ErrEmailAlreadyExists {
+			c.JSON(http.StatusConflict, gin.H{"error": "このメールアドレスは既に使用されています"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "サーバーエラーが発生しました"})
+		return
+	}
+
+	// 4. 更新後のユーザー情報を返す
 	c.JSON(http.StatusOK, user)
 }
 

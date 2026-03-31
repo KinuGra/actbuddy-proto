@@ -9,14 +9,18 @@ const API_BASE_URL =
 export function useCurrentUser() {
   const [user, setUser] = useState<UserResponse | null>(null)
 
-  useEffect(() => {
+  const refresh = () => {
     fetch(`${API_BASE_URL}/api/auth/me`, {
       credentials: 'include',
     })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => setUser(data))
       .catch(() => setUser(null))
+  }
+
+  useEffect(() => {
+    refresh()
   }, [])
 
-  return user
+  return { user, refresh }
 }

@@ -59,7 +59,7 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const router = useRouter()
-  const currentUser = useCurrentUser()
+  const { user: currentUser } = useCurrentUser()
 
   useEffect(() => {
     setMounted(true)
@@ -147,13 +147,11 @@ export function Header() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>{mounted ? (currentUser?.display_name ?? '') : ''}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <UserCircle className="w-4 h-4 mr-2" />
-                    プロフィール
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Settings className="w-4 h-4 mr-2" />
-                    設定
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings" className="w-full flex items-center">
+                      <Settings className="w-4 h-4 mr-2" />
+                      設定
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
