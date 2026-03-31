@@ -6,6 +6,11 @@ import { Message, ChatRoom } from '../types/chat'
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080'
 const WS_BASE = API_BASE.replace(/^http/, 'ws')
 
+function getSessionToken(): string | null {
+  const match = document.cookie.match(/(^| )session_token=([^;]+)/)
+  return match ? match[2] : null
+}
+
 export function useChat(initialRoomId?: string) {
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([])
   const [messages, setMessages] = useState<Record<string, Message[]>>({})
@@ -105,7 +110,8 @@ export function useChat(initialRoomId?: string) {
     [messages],
   )
 
-  const wsURL = `${WS_BASE}/ws`
+  const token = getSessionToken()
+  const wsURL = `${WS_BASE}/ws${token ? `?token=${token}` : ''}`
 
   return {
     chatRooms,
