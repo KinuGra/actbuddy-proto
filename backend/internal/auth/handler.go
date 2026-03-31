@@ -82,6 +82,7 @@ func (h *Handler) Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "ログアウトしました"})
 }
 
+// Me GET /api/auth/me
 func (h *Handler) Me(c *gin.Context) {
 	user, ok := GetCurrentUserFromContext(c)
 	if !ok {
