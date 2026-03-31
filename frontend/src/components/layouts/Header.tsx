@@ -50,7 +50,7 @@ const NAV_ITEMS: NavItem[] = [
   },
 ]
 
-const MOCK_NOTIFICATION_COUNT = 3
+const MOCK_NOTIFICATION_COUNT = 0
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080'
@@ -114,18 +114,37 @@ export function Header() {
             {/* Right side UI area */}
             <div className="flex items-center gap-2 md:gap-4">
               {/* Notification Bell */}
-              <div className="relative inline-flex">
-                <button className="p-2 hover:bg-accent rounded-lg transition-colors flex items-center justify-center">
-                  <Bell className="w-5 h-5" />
-                </button>
-                {MOCK_NOTIFICATION_COUNT > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center leading-none font-bold">
-                    {MOCK_NOTIFICATION_COUNT > 9
-                      ? '9+'
-                      : MOCK_NOTIFICATION_COUNT}
-                  </span>
-                )}
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <div className="relative inline-flex">
+                    <button className="p-2 hover:bg-accent rounded-lg transition-colors flex items-center justify-center">
+                      <Bell className="w-5 h-5" />
+                    </button>
+                    {MOCK_NOTIFICATION_COUNT > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center leading-none font-bold">
+                        {MOCK_NOTIFICATION_COUNT > 9
+                          ? '9+'
+                          : MOCK_NOTIFICATION_COUNT}
+                      </span>
+                    )}
+                  </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>
+                    {MOCK_NOTIFICATION_COUNT === 0
+                      ? '通知がありません'
+                      : `未読通知が ${MOCK_NOTIFICATION_COUNT} 件あります`}
+                  </DropdownMenuLabel>
+                  {MOCK_NOTIFICATION_COUNT > 0 && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem>
+                        通知一覧を見る
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               {/* Message Mail */}
               <div className="relative inline-flex">
