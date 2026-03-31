@@ -13,9 +13,16 @@ import (
 
 // サービス層のエラー定義
 var (
-	ErrInvalidCredentials = errors.New("invalid email or password")
-	ErrEmailAlreadyExists = errors.New("email already exists")
+	ErrInvalidCredentials    = errors.New("invalid email or password")
+	ErrEmailAlreadyExists    = errors.New("email already exists")
+	ErrEmailChangeNotAllowed = errors.New("email change not allowed for this account")
 )
+
+// ゲスト公開アカウント（メールアドレス変更禁止）
+var guestEmails = map[string]struct{}{
+	"test@test.com":  {},
+	"test2@test.com": {},
+}
 
 // Serviceは認証に関するビジネスロジックを持つ
 type Service struct {
@@ -117,8 +124,14 @@ func (s *Service) UpdateMe(ctx context.Context, userID uuid.UUID, req UpdateMeRe
 		return nil, err
 	}
 
-	// 2. メールアドレスが変更される場合、重複チェック
+	// 2. メールアドレスが変更される場合のチェック
 	if req.Email != user.Email {
+		// ゲストアカウントのメールアドレス変更を禁止
+		if _, isGuest := guestEmails[user.Email]; isGuest {
+			return nil, ErrEmailChangeNotAllowed
+		}
+
+		// 重複チェック
 		_, err := s.repo.GetUserByEmail(ctx, req.Email)
 		if err == nil {
 			return nil, ErrEmailAlreadyExists
