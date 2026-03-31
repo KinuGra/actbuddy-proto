@@ -103,11 +103,44 @@ func (s *Service) Login(ctx context.Context, req LoginRequest) (*UserResponse, s
 	// 4. レスポンスを返す
 	return toUserResponse(user), token, nil
 }
-
-// ログアウト
-
+	// ログアウト
 func (s *Service) Logout(ctx context.Context, token string) error {
 	return s.repo.DeleteSessionByToken(ctx, token)
+}
+
+// ユーザー情報更新
+
+func (s *Service) UpdateMe(ctx context.Context, userID uuid.UUID, req UpdateMeRequest) (*UserResponse, error) {
+	// 1. ユーザーを取得
+	user, err := s.repo.GetUserByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. メールアドレスが変更される場合、重複チェック
+	if req.Email != user.Email {
+		_, err := s.repo.GetUserByEmail(ctx, req.Email)
+		if err == nil {
+			return nil, ErrEmailAlreadyExists
+		}
+		if !errors.Is(err, ErrUserNotFound) {
+			return nil, err
+		}
+	}
+
+	// 3. フィールドを更新
+	user.Email = req.Email
+	user.DisplayName = req.DisplayName
+
+	// 4. DB保存
+	if err := s.repo.UpdateUser(ctx, user); err != nil {
+		if errors.Is(err, ErrDuplicateEmail) {
+			return nil, ErrEmailAlreadyExists
+		}
+		return nil, err
+	}
+
+	return toUserResponse(user), nil
 }
 
 // 現在のユーザー情報

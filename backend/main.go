@@ -90,6 +90,7 @@ func main() {
 	{
 		protected.POST("/auth/logout", authHandler.Logout)
 		protected.GET("/auth/me", authHandler.Me)
+		protected.PUT("/auth/me", authHandler.UpdateMe)
 
 		// チャット
 		protected.GET("/rooms", chatHandler.GetRooms)

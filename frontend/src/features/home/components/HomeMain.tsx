@@ -33,7 +33,7 @@ interface TodayStats {
 }
 
 export default function HomeMain() {
-  const currentUser = useCurrentUser()
+  const { user: currentUser } = useCurrentUser()
   const [capacity, setCapacity] = useState<CapacityData | null>(null)
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [todayStats, setTodayStats] = useState<TodayStats | null>(null)

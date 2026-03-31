@@ -74,6 +74,30 @@ func (r *PostgresRepository) GetUserByID(ctx context.Context, id uuid.UUID) (*Us
 	return &user, nil
 }
 
+func (r *PostgresRepository) UpdateUser(ctx context.Context, user *User) error {
+	query := `
+		UPDATE users
+		SET email = :email, display_name = :display_name, updated_at = NOW()
+		WHERE id = :id
+	`
+	result, err := r.db.NamedExecContext(ctx, query, user)
+	if err != nil {
+		if isUniqueViolation(err) {
+			return ErrDuplicateEmail
+		}
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrUserNotFound
+	}
+	return nil
+}
+
 func (r *PostgresRepository) CreateSession(ctx context.Context, session *Session) error {
 	query := `
 		INSERT INTO sessions (id, user_id, token, expires_at)
