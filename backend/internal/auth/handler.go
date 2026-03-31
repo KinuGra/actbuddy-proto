@@ -2,6 +2,7 @@ package auth
 
 import (
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -94,14 +95,20 @@ func (h *Handler) Me(c *gin.Context) {
 
 // setSessionCookie はレスポンスにセッションCookieをセットする
 func setSessionCookie(c *gin.Context, token string) {
+	secure := os.Getenv("GIN_MODE") == "release"
+	if secure {
+		c.SetSameSite(http.SameSiteNoneMode)
+	} else {
+		c.SetSameSite(http.SameSiteLaxMode)
+	}
 	c.SetCookie(
 		SessionCookieName,
 		token,
 		int(24*time.Hour.Seconds()), // 24時間
 		"/",
-		"",    // domain（本番では設定）
-		false, // secure（本番ではtrue）
-		true,  // httpOnly
+		"",     // domain（本番では設定）
+		secure, // secure（本番ではtrue）
+		true,   // httpOnly
 	)
 }
 
