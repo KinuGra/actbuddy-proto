@@ -112,6 +112,10 @@ func (h *Handler) UpdateMe(c *gin.Context) {
 	// 3. サービス層を呼ぶ
 	user, err := h.service.UpdateMe(c.Request.Context(), currentUser.ID, req)
 	if err != nil {
+		if err == ErrEmailChangeNotAllowed {
+			c.JSON(http.StatusForbidden, gin.H{"error": "ゲストアカウントのメールアドレスは変更できません"})
+			return
+		}
 		if err == ErrEmailAlreadyExists {
 			c.JSON(http.StatusConflict, gin.H{"error": "このメールアドレスは既に使用されています"})
 			return
