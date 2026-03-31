@@ -1,16 +1,18 @@
-FROM golang:1.25.4-bookworm
-WORKDIR /app
+# ===== Build stage =====
+FROM golang:1.25.4-bookworm AS builder
 
+WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
-
 COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -o /server ./main.go
 
-# ホットリロードツール air
-RUN go install github.com/air-verse/air@latest
+# ===== Run stage =====
+FROM debian:bookworm-slim
 
-# golang-migrate CLI
-RUN go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /server /server
 
 EXPOSE 8080
-CMD ["air", "-c", ".air.toml"]
+CMD ["/server"]

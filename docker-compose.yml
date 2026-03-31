@@ -1,6 +1,8 @@
 services:
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev # 開発用（air）
     ports:
       - "8080:8080"
     volumes:
@@ -40,6 +42,5 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
 volumes:
   postgres_data:
