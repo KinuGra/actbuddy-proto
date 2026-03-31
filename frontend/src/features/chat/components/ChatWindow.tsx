@@ -69,7 +69,7 @@ export function ChatWindow({
   }
 
   return (
-    <Card className="flex flex-col h-[600px]">
+    <Card className="flex flex-col h-[calc(100vh-140px)] md:h-[600px]">
       <CardHeader className="border-b">
         <CardTitle>{participantName}</CardTitle>
       </CardHeader>

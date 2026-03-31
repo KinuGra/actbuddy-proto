@@ -29,7 +29,7 @@ export default function Calendar() {
   } = useCalendar()
 
   return (
-    <div className="flex flex-col h-screen p-4">
+    <div className="flex flex-col h-[calc(100vh-57px)] p-3 md:p-4">
       {error && (
         <div className="mb-2 p-2 text-sm text-red-600 bg-red-50 rounded">
           {error}
