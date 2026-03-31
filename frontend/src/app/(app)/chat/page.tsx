@@ -51,6 +51,7 @@ function ChatContent() {
               roomId={selectedRoomId}
               participantName={selectedRoom.participantName}
               messages={messages}
+              currentUserId={currentUserId}
               onReceiveMessage={addMessage}
               wsURL={wsURL}
             />

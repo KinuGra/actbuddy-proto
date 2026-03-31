@@ -18,6 +18,7 @@ interface ChatWindowProps {
   roomId: string
   participantName: string
   messages: Message[]
+  currentUserId: string | null
   onReceiveMessage: (data: string) => void
   wsURL: string
 }
@@ -26,6 +27,7 @@ export function ChatWindow({
   roomId,
   participantName,
   messages,
+  currentUserId,
   onReceiveMessage,
   wsURL,
 }: ChatWindowProps) {
@@ -73,7 +75,7 @@ export function ChatWindow({
       </CardHeader>
       <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => {
-          const isOwn = message.senderId === 'current'
+          const isOwn = message.senderId === currentUserId
           return (
             <div
               key={message.id}
