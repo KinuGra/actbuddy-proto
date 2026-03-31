@@ -7,6 +7,11 @@
 package main
 
 import (
+	"backend/internal/auth"
+	"backend/internal/buddy"
+	"backend/internal/chat"
+	"backend/internal/chat/websocket"
+	"backend/internal/task"
 	"database/sql"
 	"log"
 	"net/http"
@@ -14,13 +19,8 @@ import (
 
 	_ "backend/docs"
 
-	"backend/internal/auth"
-	"backend/internal/buddy"
-	"backend/internal/chat"
 	chatmessage "backend/internal/chat/message"
 	chatroom "backend/internal/chat/room"
-	"backend/internal/chat/websocket"
-	"backend/internal/task"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -124,7 +124,13 @@ func main() {
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	_ = r.Run("0.0.0.0:8080")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	if err := r.Run(":" + port); err != nil {
+		log.Fatalf("サーバー起動に失敗: %v", err)
+	}
 }
 
 // healthHandler godoc
