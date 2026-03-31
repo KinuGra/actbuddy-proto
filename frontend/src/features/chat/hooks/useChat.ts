@@ -6,6 +6,11 @@ import { Message, ChatRoom } from '../types/chat'
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080'
 const WS_BASE = API_BASE.replace(/^http/, 'ws')
 
+function getSessionToken(): string | null {
+  if (typeof window === 'undefined') return null
+  return sessionStorage.getItem('session_token')
+}
+
 export function useChat(initialRoomId?: string) {
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([])
   const [messages, setMessages] = useState<Record<string, Message[]>>({})
@@ -83,8 +88,8 @@ export function useChat(initialRoomId?: string) {
         const newMessage: Message = {
           id: String(msg.id),
           roomId: msg.room_id,
-          senderId: msg.sender_id === currentUserId ? 'current' : msg.sender_id,
-          senderName: msg.sender_id === currentUserId ? 'あなた' : msg.sender_name,
+          senderId: msg.sender_id,
+          senderName: msg.sender_name,
           content: msg.content,
           timestamp: new Date(msg.created_at),
           isRead: false,
@@ -97,7 +102,7 @@ export function useChat(initialRoomId?: string) {
         // parse error は無視
       }
     },
-    [currentUserId],
+    [],
   )
 
   const getMessages = useCallback(
@@ -105,7 +110,8 @@ export function useChat(initialRoomId?: string) {
     [messages],
   )
 
-  const wsURL = `${WS_BASE}/ws`
+  const token = getSessionToken()
+  const wsURL = `${WS_BASE}/ws${token ? `?token=${token}` : ''}`
 
   return {
     chatRooms,

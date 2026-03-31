@@ -18,6 +18,7 @@ interface ChatWindowProps {
   roomId: string
   participantName: string
   messages: Message[]
+  currentUserId: string | null
   onReceiveMessage: (data: string) => void
   wsURL: string
 }
@@ -26,12 +27,18 @@ export function ChatWindow({
   roomId,
   participantName,
   messages,
+  currentUserId,
   onReceiveMessage,
   wsURL,
 }: ChatWindowProps) {
   const [inputValue, setInputValue] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const wsRef = useRef<WebSocket | null>(null)
+  const onReceiveMessageRef = useRef(onReceiveMessage)
+
+  useEffect(() => {
+    onReceiveMessageRef.current = onReceiveMessage
+  }, [onReceiveMessage])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -42,7 +49,7 @@ export function ChatWindow({
     wsRef.current = ws
 
     ws.onopen = () => console.log('WebSocket opened')
-    ws.onmessage = (event) => onReceiveMessage(event.data)
+    ws.onmessage = (event) => onReceiveMessageRef.current(event.data)
     ws.onclose = () => console.log('WebSocket disconnected')
 
     return () => ws.close()
@@ -68,7 +75,7 @@ export function ChatWindow({
       </CardHeader>
       <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => {
-          const isOwn = message.senderId === 'current'
+          const isOwn = message.senderId === currentUserId
           return (
             <div
               key={message.id}

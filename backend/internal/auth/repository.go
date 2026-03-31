@@ -12,6 +12,7 @@ type Repository interface {
 	CreateUser(ctx context.Context, user *User) error
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (*User, error)
+	UpdateUser(ctx context.Context, user *User) error
 
 	// セッション操作
 	CreateSession(ctx context.Context, session *Session) error

@@ -12,7 +12,7 @@ function ChatContent() {
   const searchParams = useSearchParams()
   const [selectedRoomId, setSelectedRoomId] = useState<string | undefined>(undefined)
 
-  const { chatRooms, wsURL, fetchMessages, addMessage, getMessages } = useChat()
+  const { chatRooms, currentUserId, wsURL, fetchMessages, addMessage, getMessages } = useChat()
 
   // ?room=<uuid> でルームを初期選択
   useEffect(() => {
@@ -51,6 +51,7 @@ function ChatContent() {
               roomId={selectedRoomId}
               participantName={selectedRoom.participantName}
               messages={messages}
+              currentUserId={currentUserId}
               onReceiveMessage={addMessage}
               wsURL={wsURL}
             />

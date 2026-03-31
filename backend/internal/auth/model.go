@@ -43,6 +43,12 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
+// UpdateMeRequest はユーザー情報の更新時にクライアントから受け取るJSON
+type UpdateMeRequest struct {
+	Email       string `json:"email" binding:"required,email"`
+	DisplayName string `json:"display_name" binding:"required"`
+}
+
 // APIレスポンス用の構造体
 
 // UserResponseはクライアントに返すユーザー情報
