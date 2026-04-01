@@ -5,8 +5,9 @@ import { useSearchParams } from 'next/navigation'
 import { useChat } from '@/features/chat/hooks/useChat'
 import { ChatRoomList } from '@/features/chat/components/ChatRoomList'
 import { ChatWindow } from '@/features/chat/components/ChatWindow'
-import { Card, CardContent } from '@/components/ui/card'
-import { MessageSquare } from 'lucide-react'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { MessageSquare, ArrowLeft } from 'lucide-react'
 
 function ChatContent() {
   const searchParams = useSearchParams()
@@ -14,15 +15,14 @@ function ChatContent() {
 
   const { chatRooms, currentUserId, wsURL, fetchMessages, addMessage, getMessages } = useChat()
 
-  // ?room=<uuid> でルームを初期選択
   useEffect(() => {
     const roomParam = searchParams.get('room')
     if (roomParam) {
       setSelectedRoomId(roomParam)
+      fetchMessages(roomParam)
     }
   }, [searchParams])
 
-  // ルーム選択時にメッセージ履歴を取得
   const handleSelectRoom = (roomId: string) => {
     setSelectedRoomId(roomId)
     fetchMessages(roomId)
@@ -32,12 +32,12 @@ function ChatContent() {
   const messages = selectedRoomId ? getMessages(selectedRoomId) : []
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">チャット</h1>
+    <div className="container mx-auto px-4 py-4 md:py-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-1">
-          <h2 className="text-xl font-semibold mb-4">チャットルーム</h2>
+        {/* ルーム一覧: モバイルでは会話選択中は非表示 */}
+        <div className={`md:col-span-1 ${selectedRoomId ? 'hidden md:block' : 'block'}`}>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">チャットルーム</p>
           <ChatRoomList
             rooms={chatRooms}
             onSelectRoom={handleSelectRoom}
@@ -45,27 +45,39 @@ function ChatContent() {
           />
         </div>
 
-        <div className="md:col-span-2">
+        {/* 会話ウィンドウ: モバイルでは会話選択中のみ表示 */}
+        <div className={`md:col-span-2 ${selectedRoomId ? 'block' : 'hidden md:block'}`}>
           {selectedRoom && selectedRoomId ? (
-            <ChatWindow
-              roomId={selectedRoomId}
-              participantName={selectedRoom.participantName}
-              messages={messages}
-              currentUserId={currentUserId}
-              onReceiveMessage={addMessage}
-              wsURL={wsURL}
-            />
+            <div className="flex flex-col gap-2">
+              {/* モバイル用の戻るボタン */}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="md:hidden self-start -ml-2 text-muted-foreground"
+                onClick={() => setSelectedRoomId(undefined)}
+              >
+                <ArrowLeft className="w-4 h-4 mr-1" />
+                ルーム一覧
+              </Button>
+              <ChatWindow
+                roomId={selectedRoomId}
+                participantName={selectedRoom.participantName}
+                messages={messages}
+                currentUserId={currentUserId}
+                onReceiveMessage={addMessage}
+                wsURL={wsURL}
+              />
+            </div>
           ) : (
-            <Card className="h-[600px]">
-              <CardContent className="flex flex-col items-center justify-center h-full">
-                <MessageSquare className="w-16 h-16 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">
-                  チャットルームを選択してください
-                </p>
-              </CardContent>
+            <Card className="hidden md:flex h-[600px] items-center justify-center">
+              <div className="flex flex-col items-center text-muted-foreground">
+                <MessageSquare className="w-12 h-12 mb-3 opacity-40" />
+                <p className="text-sm">チャットルームを選択してください</p>
+              </div>
             </Card>
           )}
         </div>
+
       </div>
     </div>
   )

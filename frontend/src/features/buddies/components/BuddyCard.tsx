@@ -20,11 +20,11 @@ export function BuddyCard({ buddy, onOpenChat }: BuddyCardProps) {
 
   return (
     <Card>
-      <CardContent className="pt-6">
-        <div className="flex items-center justify-between mb-4">
+      <CardContent className="pt-4">
+        <div className="flex items-center justify-between mb-3">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-xl font-semibold">{buddy.partnerName}</h3>
+              <h3 className="text-base font-semibold">{buddy.partnerName}</h3>
               <Badge variant={buddy.relationType === 'buddy' ? 'default' : 'secondary'}>
                 {buddy.relationType === 'buddy' ? 'バディ' : 'フレンド'}
               </Badge>
@@ -33,7 +33,7 @@ export function BuddyCard({ buddy, onOpenChat }: BuddyCardProps) {
         </div>
 
         {buddy.relationType === 'buddy' && buddy.status === 'active' && (
-          <div className="mb-4">
+          <div className="mb-3">
             <div className="flex items-center justify-between text-sm mb-2">
               <span className="text-muted-foreground">バディ期間の進捗</span>
               <span className="font-medium">残り {daysRemaining}日</span>

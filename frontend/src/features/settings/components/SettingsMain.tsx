@@ -72,11 +72,11 @@ export default function SettingsMain() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex items-center gap-2 mb-8">
-          <Settings className="w-8 h-8 text-primary" />
-          <h1 className="text-3xl font-bold">設定</h1>
+    <div className="container mx-auto px-4 py-5">
+      <div className="max-w-xl mx-auto">
+        <div className="flex items-center gap-2 mb-5">
+          <Settings className="w-5 h-5 text-primary" />
+          <h1 className="text-xl font-semibold">設定</h1>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -87,7 +87,7 @@ export default function SettingsMain() {
                 表示名やメールアドレスを変更できます。
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4">
               {message && (
                 <div
                   className={`p-4 rounded-md text-sm ${
@@ -129,7 +129,7 @@ export default function SettingsMain() {
                 />
               </div>
             </CardContent>
-            <CardFooter className="flex justify-end border-t pt-6">
+            <CardFooter className="flex justify-end border-t pt-4">
               <Button type="submit" disabled={isLoading} className="gap-2">
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
