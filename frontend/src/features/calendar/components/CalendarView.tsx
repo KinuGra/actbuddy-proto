@@ -285,7 +285,7 @@ export function CalendarView({
           if (!open) setSelectedItem(null)
         }}
       >
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>Action Item</DialogTitle>
           </DialogHeader>
