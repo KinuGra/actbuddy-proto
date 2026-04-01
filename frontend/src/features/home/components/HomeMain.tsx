@@ -20,9 +20,10 @@ interface ProfileData {
   bio: string
 }
 
-interface TodayStats {
-  total: number
-  completed: number
+interface UpcomingTask {
+  title: string
+  startTime: Date
+  endTime: Date
 }
 
 interface BuddyInfo {
@@ -38,6 +39,12 @@ interface BuddyTodayTask {
 
 interface BuddyTodayStatus {
   tasks: BuddyTodayTask[]
+}
+
+function todayStart(): Date {
+  const d = new Date()
+  d.setHours(0, 0, 0, 0)
+  return d
 }
 
 function isTodayTask(startTime: string): boolean {
@@ -66,7 +73,7 @@ async function fetchBuddyTodayStatus(partnerId: string): Promise<BuddyTodayStatu
   const tasks = body.data
     .filter((i) => i.kind !== 'break' && isTodayTask(i.start_time))
     .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
-    .slice(0, 2)
+    .slice(0, 4)
     .map((i) => ({
       title: i.title,
       startTime: new Date(i.start_time),
@@ -79,7 +86,8 @@ export default function HomeMain() {
   const { user: currentUser } = useCurrentUser()
   const [capacity, setCapacity] = useState<CapacityData | null>(null)
   const [profile, setProfile] = useState<ProfileData | null>(null)
-  const [todayStats, setTodayStats] = useState<TodayStats | null>(null)
+  const [upcomingTasks, setUpcomingTasks] = useState<UpcomingTask[] | null>(null)
+  const [hasTodayTask, setHasTodayTask] = useState<boolean | null>(null)
   const [buddies, setBuddies] = useState<BuddyInfo[]>([])
   const [buddyStatuses, setBuddyStatuses] = useState<Record<string, BuddyTodayStatus>>({})
   const [mounted, setMounted] = useState(false)
@@ -99,22 +107,37 @@ export default function HomeMain() {
 
     fetch(`${API_BASE}/api/v1/action-items`, { credentials: 'include' })
       .then((r) => (r.ok ? r.json() : null))
-      .then((body: { data: Array<{ status: string; kind: string; start_time: string }> } | null) => {
-        if (!body?.data) return
-        const tasks = body.data.filter((i) => i.kind !== 'break' && isTodayTask(i.start_time))
-        const done = tasks.filter(
-          (i) => i.status === 'completed' || i.status === 'progress_70'
-        ).length
-        setTodayStats({ total: tasks.length, completed: done })
-      })
+      .then(
+        (body: {
+          data: Array<{ title: string; status: string; kind: string; start_time: string; end_time: string }>
+        } | null) => {
+          if (!body?.data) return
+          const threshold = todayStart()
+          setHasTodayTask(body.data.some((i) => i.kind !== 'break' && isTodayTask(i.start_time)))
+          const upcoming = body.data
+            .filter(
+              (i) =>
+                i.kind !== 'break' &&
+                new Date(i.start_time) >= threshold &&
+                i.status !== 'completed' &&
+                i.status !== 'progress_70'
+            )
+            .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
+            .slice(0, 4)
+            .map((i) => ({
+              title: i.title,
+              startTime: new Date(i.start_time),
+              endTime: new Date(i.end_time),
+            }))
+          setUpcomingTasks(upcoming)
+        }
+      )
       .catch(() => null)
 
     fetch(`${API_BASE}/api/buddy/relationships`, { credentials: 'include' })
       .then((r) => (r.ok ? r.json() : null))
       .then(
-        (
-          data: Array<{ partner: { id: string; display_name: string }; status: string }> | null
-        ) => {
+        (data: Array<{ partner: { id: string; display_name: string }; status: string }> | null) => {
           if (!data) return
           const active = data
             .filter((r) => r.status === 'active')
@@ -134,7 +157,6 @@ export default function HomeMain() {
 
   const achievementRate = capacity ? Math.round(capacity.achievement_rate * 100) : null
   const displayName = mounted ? (currentUser?.display_name ?? '') : ''
-  const hasMyTasksToday = todayStats !== null && todayStats.total > 0
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
@@ -148,7 +170,7 @@ export default function HomeMain() {
       </div>
 
       {/* 今日のタイムブロッキング促しバナー */}
-      {todayStats !== null && !hasMyTasksToday && (
+      {hasTodayTask === false && (
         <Link href="/calendar">
           <div className="mb-4 flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/8 border border-primary/20 hover:bg-primary/12 transition-colors cursor-pointer">
             <div className="p-1.5 bg-primary/15 rounded-lg shrink-0">
@@ -166,8 +188,8 @@ export default function HomeMain() {
       {/* Bento grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
 
-        {/* Hero: 達成率 — spans 2 cols on md */}
-        <Card className="md:col-span-2 relative overflow-hidden bg-primary text-primary-foreground border-0 shadow-none">
+        {/* Hero: 達成率 */}
+        <Card className="col-span-2 md:col-span-2 relative overflow-hidden bg-primary text-primary-foreground border-0 shadow-none">
           <div className="absolute -top-8 -right-8 w-32 h-32 bg-white/8 rounded-full pointer-events-none" />
           <div className="absolute bottom-2 -left-6 w-20 h-20 bg-white/6 rounded-full pointer-events-none" />
           <div className="relative p-5">
@@ -187,42 +209,6 @@ export default function HomeMain() {
                   ? '順調に進んでいます'
                   : 'もう一頑張り！'
                 : 'データを読み込み中'}
-            </p>
-          </div>
-        </Card>
-
-        {/* バディ数 */}
-        <Card>
-          <div className="p-4">
-            <div className="flex items-center gap-1.5 mb-3">
-              <div className="p-1.5 bg-sky-500/10 rounded-lg">
-                <Users className="w-3.5 h-3.5 text-sky-600" />
-              </div>
-              <p className="text-xs text-muted-foreground">バディ</p>
-            </div>
-            <p className="text-3xl font-bold tabular-nums tracking-tight">
-              {capacity !== null ? capacity.current_count : '—'}
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {capacity !== null ? `/ ${capacity.max_count} 人` : '\u00a0'}
-            </p>
-          </div>
-        </Card>
-
-        {/* 今日のタスク */}
-        <Card>
-          <div className="p-4">
-            <div className="flex items-center gap-1.5 mb-3">
-              <div className="p-1.5 bg-emerald-500/10 rounded-lg">
-                <Calendar className="w-3.5 h-3.5 text-emerald-600" />
-              </div>
-              <p className="text-xs text-muted-foreground">今日</p>
-            </div>
-            <p className="text-3xl font-bold tabular-nums tracking-tight">
-              {todayStats !== null ? todayStats.completed : '—'}
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {todayStats !== null ? `/ ${todayStats.total} 件完了` : '\u00a0'}
             </p>
           </div>
         </Card>
@@ -254,6 +240,36 @@ export default function HomeMain() {
               </div>
             ) : (
               <p className="text-xs text-muted-foreground">目標が未設定です</p>
+            )}
+          </div>
+        </Card>
+
+        {/* 直近の未完了タスク */}
+        <Card className="col-span-2 md:col-span-3">
+          <div className="px-4 py-3.5">
+            <div className="flex items-center gap-1.5 mb-3">
+              <div className="p-1.5 bg-emerald-500/10 rounded-lg">
+                <Calendar className="w-3.5 h-3.5 text-emerald-600" />
+              </div>
+              <p className="text-xs text-muted-foreground">直近のタスク</p>
+            </div>
+            {upcomingTasks === null && (
+              <p className="text-xs text-muted-foreground">読み込み中...</p>
+            )}
+            {upcomingTasks !== null && upcomingTasks.length === 0 && (
+              <p className="text-xs text-muted-foreground">未完了のタスクはありません</p>
+            )}
+            {upcomingTasks !== null && upcomingTasks.length > 0 && (
+              <div className="flex flex-col gap-2">
+                {upcomingTasks.map((task, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className="text-xs tabular-nums text-muted-foreground whitespace-nowrap w-28 shrink-0">
+                      {formatTime(task.startTime)}〜{formatTime(task.endTime)}
+                    </span>
+                    <span className="text-sm truncate">{task.title}</span>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </Card>
@@ -301,13 +317,13 @@ export default function HomeMain() {
                       <p className="text-xs text-muted-foreground pl-10">まだ登録していないようです</p>
                     )}
                     {isLoaded && isBlocking && (
-                      <div className="pl-10 flex flex-col gap-1">
+                      <div className="pl-10 flex flex-col gap-1.5">
                         {tasks.map((task, i) => (
-                          <div key={i} className="flex items-baseline gap-1.5">
-                            <span className="text-xs tabular-nums text-muted-foreground whitespace-nowrap">
+                          <div key={i} className="flex items-center gap-3">
+                            <span className="text-xs tabular-nums text-muted-foreground whitespace-nowrap w-28 shrink-0">
                               {formatTime(task.startTime)}〜{formatTime(task.endTime)}
                             </span>
-                            <span className="text-xs font-medium truncate">{task.title}</span>
+                            <span className="text-xs truncate">{task.title}</span>
                           </div>
                         ))}
                       </div>
