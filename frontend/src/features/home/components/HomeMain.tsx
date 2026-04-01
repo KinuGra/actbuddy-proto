@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Users, Calendar, Target, TrendingUp, ChevronRight } from 'lucide-react'
+import { Users, Calendar, Target, TrendingUp, ChevronRight, Zap } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
 import Link from 'next/link'
 import { useCurrentUser } from '@/features/auth/hooks/useCurrentUser'
 
@@ -67,51 +66,59 @@ export default function HomeMain() {
       .catch(() => null)
   }, [])
 
-  const achievementRate = capacity
-    ? Math.round(capacity.achievement_rate * 100)
-    : null
-
+  const achievementRate = capacity ? Math.round(capacity.achievement_rate * 100) : null
   const displayName = mounted ? (currentUser?.display_name ?? '') : ''
 
   return (
-    <div className="container mx-auto px-3 sm:px-4 py-5 max-w-2xl">
+    <div className="max-w-2xl mx-auto px-4 py-6">
 
       {/* グリーティング */}
       <div className="mb-5">
         <p className="text-xs text-muted-foreground mb-0.5">おかえりなさい</p>
-        <h1 className="text-xl font-semibold">
+        <h1 className="text-xl font-semibold tracking-tight">
           {displayName ? `${displayName}さん` : 'ダッシュボード'}
         </h1>
       </div>
 
-      {/* ステータスカード */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-2.5 mb-4">
-        <Card>
-          <div className="p-4">
-            <div className="flex items-center gap-1.5 mb-2.5">
-              <div className="p-1.5 bg-primary/12 rounded-lg">
-                <TrendingUp className="w-3.5 h-3.5 text-primary" />
-              </div>
-              <p className="text-xs text-muted-foreground">達成率</p>
+      {/* Bento grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+
+        {/* Hero: 達成率 — spans 2 cols on md */}
+        <Card className="md:col-span-2 relative overflow-hidden bg-primary text-primary-foreground border-0 shadow-none">
+          {/* Decorative circles */}
+          <div className="absolute -top-8 -right-8 w-32 h-32 bg-white/8 rounded-full pointer-events-none" />
+          <div className="absolute bottom-2 -left-6 w-20 h-20 bg-white/6 rounded-full pointer-events-none" />
+          <div className="relative p-5">
+            <div className="flex items-center gap-1.5 mb-3">
+              <TrendingUp className="w-3.5 h-3.5 text-primary-foreground/70" />
+              <p className="text-xs text-primary-foreground/70">達成率</p>
             </div>
-            <p className="text-2xl font-semibold tabular-nums tracking-tight">
-              {achievementRate !== null ? `${achievementRate}%` : '—'}
+            <p className="text-5xl font-bold tabular-nums tracking-tight leading-none mb-1">
+              {achievementRate !== null ? achievementRate : '—'}
+              {achievementRate !== null && <span className="text-2xl font-semibold ml-0.5">%</span>}
             </p>
-            {achievementRate !== null && (
-              <Progress value={achievementRate} className="h-1 mt-2.5" />
-            )}
+            <p className="text-xs text-primary-foreground/60 mt-2">
+              {achievementRate !== null
+                ? achievementRate >= 80
+                  ? '素晴らしい進捗です'
+                  : achievementRate >= 50
+                  ? '順調に進んでいます'
+                  : 'もう一頑張り！'
+                : 'データを読み込み中'}
+            </p>
           </div>
         </Card>
 
+        {/* バディ数 */}
         <Card>
           <div className="p-4">
-            <div className="flex items-center gap-1.5 mb-2.5">
-              <div className="p-1.5 bg-sky-500/12 rounded-lg">
+            <div className="flex items-center gap-1.5 mb-3">
+              <div className="p-1.5 bg-sky-500/10 rounded-lg">
                 <Users className="w-3.5 h-3.5 text-sky-600" />
               </div>
               <p className="text-xs text-muted-foreground">バディ</p>
             </div>
-            <p className="text-2xl font-semibold tabular-nums tracking-tight">
+            <p className="text-3xl font-bold tabular-nums tracking-tight">
               {capacity !== null ? capacity.current_count : '—'}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -120,86 +127,100 @@ export default function HomeMain() {
           </div>
         </Card>
 
+        {/* 今日のタスク */}
         <Card>
           <div className="p-4">
-            <div className="flex items-center gap-1.5 mb-2.5">
-              <div className="p-1.5 bg-emerald-500/12 rounded-lg">
+            <div className="flex items-center gap-1.5 mb-3">
+              <div className="p-1.5 bg-emerald-500/10 rounded-lg">
                 <Calendar className="w-3.5 h-3.5 text-emerald-600" />
               </div>
               <p className="text-xs text-muted-foreground">今日</p>
             </div>
-            <p className="text-2xl font-semibold tabular-nums tracking-tight">
+            <p className="text-3xl font-bold tabular-nums tracking-tight">
               {todayStats !== null ? todayStats.completed : '—'}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {todayStats !== null ? `/ ${todayStats.total} 件` : '\u00a0'}
+              {todayStats !== null ? `/ ${todayStats.total} 件完了` : '\u00a0'}
             </p>
           </div>
         </Card>
-      </div>
 
-      {/* 目標 */}
-      {profile && profile.goal_types.length > 0 && (
-        <Card className="mb-4">
-          <div className="px-4 py-3.5">
-            <div className="flex items-center justify-between mb-2.5">
+        {/* 目標タグ */}
+        <Card className="col-span-2 md:col-span-1">
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-1.5">
-                <Target className="w-3.5 h-3.5 text-primary" />
-                <span className="text-xs font-medium text-muted-foreground">設定中の目標</span>
+                <div className="p-1.5 bg-primary/10 rounded-lg">
+                  <Target className="w-3.5 h-3.5 text-primary" />
+                </div>
+                <p className="text-xs text-muted-foreground">目標</p>
               </div>
               <Button variant="ghost" size="sm" asChild className="h-6 text-xs px-2 -mr-1">
                 <Link href="/matching">編集</Link>
               </Button>
             </div>
-            <div className="flex flex-wrap gap-1.5">
-              {profile.goal_types.map((goal) => (
-                <span
-                  key={goal}
-                  className="px-2.5 py-0.5 bg-primary/10 text-primary text-xs rounded-full"
-                >
-                  {goal}
-                </span>
-              ))}
-            </div>
-            {profile.bio && (
-              <p className="mt-2 text-xs text-muted-foreground">{profile.bio}</p>
+            {profile && profile.goal_types.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {profile.goal_types.map((goal) => (
+                  <span
+                    key={goal}
+                    className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full"
+                  >
+                    {goal}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">目標が未設定です</p>
             )}
           </div>
         </Card>
-      )}
+      </div>
 
       {/* クイックアクション */}
       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
         クイックアクション
       </p>
-      <div className="flex flex-col gap-2">
-        <Card className="hover:bg-secondary/50 transition-colors cursor-pointer">
+      <div className="flex flex-col gap-1.5">
+        <Card className="hover:bg-secondary/60 transition-colors cursor-pointer">
           <Link href="/matching" className="flex items-center gap-3 px-4 py-3.5">
-            <div className="p-2 bg-primary/12 rounded-xl shrink-0">
+            <div className="p-2 bg-primary/10 rounded-xl shrink-0">
               <Users className="w-4 h-4 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium leading-snug">バディを探す</p>
               <p className="text-xs text-muted-foreground">目標が近い人とマッチング</p>
             </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground/50 shrink-0" />
+            <ChevronRight className="w-4 h-4 text-muted-foreground/40 shrink-0" />
           </Link>
         </Card>
 
-        <Card className="hover:bg-secondary/50 transition-colors cursor-pointer">
+        <Card className="hover:bg-secondary/60 transition-colors cursor-pointer">
           <Link href="/calendar" className="flex items-center gap-3 px-4 py-3.5">
-            <div className="p-2 bg-emerald-500/12 rounded-xl shrink-0">
+            <div className="p-2 bg-emerald-500/10 rounded-xl shrink-0">
               <Calendar className="w-4 h-4 text-emerald-600" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium leading-snug">カレンダー</p>
               <p className="text-xs text-muted-foreground">Action Itemを管理する</p>
             </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground/50 shrink-0" />
+            <ChevronRight className="w-4 h-4 text-muted-foreground/40 shrink-0" />
+          </Link>
+        </Card>
+
+        <Card className="hover:bg-secondary/60 transition-colors cursor-pointer">
+          <Link href="/chat" className="flex items-center gap-3 px-4 py-3.5">
+            <div className="p-2 bg-amber-500/10 rounded-xl shrink-0">
+              <Zap className="w-4 h-4 text-amber-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium leading-snug">チャット</p>
+              <p className="text-xs text-muted-foreground">バディとメッセージ</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground/40 shrink-0" />
           </Link>
         </Card>
       </div>
-
     </div>
   )
 }
