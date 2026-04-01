@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Users, Calendar, Target, TrendingUp, ChevronRight, Zap } from 'lucide-react'
+import { Users, Calendar, Target, TrendingUp, ChevronRight, Zap, CheckCircle2, Clock } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
@@ -25,11 +25,63 @@ interface TodayStats {
   completed: number
 }
 
+interface BuddyInfo {
+  partnerId: string
+  partnerName: string
+}
+
+interface BuddyTodayTask {
+  title: string
+  startTime: Date
+  endTime: Date
+}
+
+interface BuddyTodayStatus {
+  tasks: BuddyTodayTask[]
+}
+
+function isTodayTask(startTime: string): boolean {
+  const t = new Date(startTime)
+  const now = new Date()
+  return (
+    t.getFullYear() === now.getFullYear() &&
+    t.getMonth() === now.getMonth() &&
+    t.getDate() === now.getDate()
+  )
+}
+
+function formatTime(d: Date): string {
+  return d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false })
+}
+
+async function fetchBuddyTodayStatus(partnerId: string): Promise<BuddyTodayStatus> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/action-items?target_user_id=${partnerId}`,
+    { credentials: 'include' }
+  )
+  if (!res.ok) return { tasks: [] }
+  const body: { data: Array<{ title: string; kind: string; start_time: string; end_time: string }> } =
+    await res.json()
+  if (!body?.data) return { tasks: [] }
+  const tasks = body.data
+    .filter((i) => i.kind !== 'break' && isTodayTask(i.start_time))
+    .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
+    .slice(0, 2)
+    .map((i) => ({
+      title: i.title,
+      startTime: new Date(i.start_time),
+      endTime: new Date(i.end_time),
+    }))
+  return { tasks }
+}
+
 export default function HomeMain() {
   const { user: currentUser } = useCurrentUser()
   const [capacity, setCapacity] = useState<CapacityData | null>(null)
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [todayStats, setTodayStats] = useState<TodayStats | null>(null)
+  const [buddies, setBuddies] = useState<BuddyInfo[]>([])
+  const [buddyStatuses, setBuddyStatuses] = useState<Record<string, BuddyTodayStatus>>({})
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -49,25 +101,40 @@ export default function HomeMain() {
       .then((r) => (r.ok ? r.json() : null))
       .then((body: { data: Array<{ status: string; kind: string; start_time: string }> } | null) => {
         if (!body?.data) return
-        const todayStart = new Date()
-        todayStart.setHours(0, 0, 0, 0)
-        const todayEnd = new Date()
-        todayEnd.setHours(23, 59, 59, 999)
-        const tasks = body.data.filter((i) => {
-          if (i.kind === 'break') return false
-          const t = new Date(i.start_time)
-          return t >= todayStart && t <= todayEnd
-        })
+        const tasks = body.data.filter((i) => i.kind !== 'break' && isTodayTask(i.start_time))
         const done = tasks.filter(
           (i) => i.status === 'completed' || i.status === 'progress_70'
         ).length
         setTodayStats({ total: tasks.length, completed: done })
       })
       .catch(() => null)
+
+    fetch(`${API_BASE}/api/buddy/relationships`, { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then(
+        (
+          data: Array<{ partner: { id: string; display_name: string }; status: string }> | null
+        ) => {
+          if (!data) return
+          const active = data
+            .filter((r) => r.status === 'active')
+            .map((r) => ({ partnerId: r.partner.id, partnerName: r.partner.display_name }))
+          setBuddies(active)
+          active.forEach(({ partnerId }) => {
+            fetchBuddyTodayStatus(partnerId)
+              .then((status) =>
+                setBuddyStatuses((prev) => ({ ...prev, [partnerId]: status }))
+              )
+              .catch(() => null)
+          })
+        }
+      )
+      .catch(() => null)
   }, [])
 
   const achievementRate = capacity ? Math.round(capacity.achievement_rate * 100) : null
   const displayName = mounted ? (currentUser?.display_name ?? '') : ''
+  const hasMyTasksToday = todayStats !== null && todayStats.total > 0
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
@@ -80,12 +147,27 @@ export default function HomeMain() {
         </h1>
       </div>
 
+      {/* 今日のタイムブロッキング促しバナー */}
+      {todayStats !== null && !hasMyTasksToday && (
+        <Link href="/calendar">
+          <div className="mb-4 flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/8 border border-primary/20 hover:bg-primary/12 transition-colors cursor-pointer">
+            <div className="p-1.5 bg-primary/15 rounded-lg shrink-0">
+              <Clock className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-primary leading-snug">今日のタスクを追加しましょう</p>
+              <p className="text-xs text-primary/70 mt-0.5">タイムブロッキングで一日を計画する</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-primary/50 shrink-0" />
+          </div>
+        </Link>
+      )}
+
       {/* Bento grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
 
         {/* Hero: 達成率 — spans 2 cols on md */}
         <Card className="md:col-span-2 relative overflow-hidden bg-primary text-primary-foreground border-0 shadow-none">
-          {/* Decorative circles */}
           <div className="absolute -top-8 -right-8 w-32 h-32 bg-white/8 rounded-full pointer-events-none" />
           <div className="absolute bottom-2 -left-6 w-20 h-20 bg-white/6 rounded-full pointer-events-none" />
           <div className="relative p-5">
@@ -176,6 +258,67 @@ export default function HomeMain() {
           </div>
         </Card>
       </div>
+
+      {/* バディの今日の状況 */}
+      {buddies.length > 0 && (
+        <div className="mb-4">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+            バディの今日
+          </p>
+          <Card>
+            <div className="divide-y divide-border/60">
+              {buddies.map(({ partnerId, partnerName }) => {
+                const status = buddyStatuses[partnerId]
+                const isLoaded = status !== undefined
+                const tasks = status?.tasks ?? []
+                const isBlocking = tasks.length > 0
+                return (
+                  <div key={partnerId} className="px-4 py-3">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div
+                        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ${
+                          isBlocking
+                            ? 'bg-emerald-500/15 text-emerald-700'
+                            : 'bg-muted text-muted-foreground'
+                        }`}
+                      >
+                        {partnerName.charAt(0)}
+                      </div>
+                      <p className="text-sm font-medium flex-1">{partnerName}</p>
+                      {isLoaded && (
+                        isBlocking ? (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                        ) : (
+                          <Clock className="w-4 h-4 text-muted-foreground/40 shrink-0" />
+                        )
+                      )}
+                    </div>
+
+                    {!isLoaded && (
+                      <p className="text-xs text-muted-foreground pl-10">確認中...</p>
+                    )}
+                    {isLoaded && !isBlocking && (
+                      <p className="text-xs text-muted-foreground pl-10">まだ登録していないようです</p>
+                    )}
+                    {isLoaded && isBlocking && (
+                      <div className="pl-10 flex flex-col gap-1">
+                        {tasks.map((task, i) => (
+                          <div key={i} className="flex items-baseline gap-1.5">
+                            <span className="text-xs tabular-nums text-muted-foreground whitespace-nowrap">
+                              {formatTime(task.startTime)}〜{formatTime(task.endTime)}
+                            </span>
+                            <span className="text-xs font-medium truncate">{task.title}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* クイックアクション */}
       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
