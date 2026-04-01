@@ -192,7 +192,7 @@ export default function MatchingMain() {
                 <div className="flex items-center justify-between px-4 py-3.5">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center font-semibold text-primary text-sm">
-                      {rel.partner.display_name.charAt(0)}
+                      {rel.partner.display_name?.[0]}
                     </div>
                     <div>
                       <p className="text-sm font-medium">{rel.partner.display_name}</p>

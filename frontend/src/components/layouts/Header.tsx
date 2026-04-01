@@ -132,7 +132,7 @@ export function Header() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center text-xs font-semibold hover:bg-primary/25 transition-colors ml-1">
-                  {mounted ? (currentUser?.display_name.charAt(0) ?? '?') : '?'}
+                  {mounted ? (currentUser?.display_name?.[0] ?? '?') : '?'}
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44">
