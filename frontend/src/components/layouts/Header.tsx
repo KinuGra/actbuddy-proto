@@ -57,6 +57,11 @@ export function Header() {
 	}, []);
 
 	useEffect(() => {
+		if (!currentUser) {
+			setTotalUnread(0);
+			return;
+		}
+
 		const fetchUnread = () => {
 			fetch(`${API_BASE_URL}/api/rooms`, { credentials: "include" })
 				.then((res) => (res.ok ? res.json() : []))
@@ -76,7 +81,7 @@ export function Header() {
 			window.removeEventListener("chat:read", fetchUnread);
 			window.removeEventListener("chat:unread", fetchUnread);
 		};
-	}, [pathname]);
+	}, [pathname, currentUser]);
 
 	const handleLogout = async () => {
 		await fetch(`${API_BASE_URL}/api/auth/logout`, {
