@@ -130,6 +130,7 @@ export function useChat(initialRoomId?: string) {
                 r.id === msg.room_id ? { ...r, unreadCount: r.unreadCount + 1 } : r,
               ),
             )
+            window.dispatchEvent(new Event('chat:unread'))
           }
         }
       } catch {

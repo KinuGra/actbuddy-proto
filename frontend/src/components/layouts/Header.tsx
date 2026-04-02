@@ -70,9 +70,11 @@ export function Header() {
 		fetchUnread();
 		const interval = setInterval(fetchUnread, 30000);
 		window.addEventListener("chat:read", fetchUnread);
+		window.addEventListener("chat:unread", fetchUnread);
 		return () => {
 			clearInterval(interval);
 			window.removeEventListener("chat:read", fetchUnread);
+			window.removeEventListener("chat:unread", fetchUnread);
 		};
 	}, [pathname]);
 
