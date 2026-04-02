@@ -95,6 +95,7 @@ func main() {
 		// チャット
 		protected.GET("/rooms", chatHandler.GetRooms)
 		protected.GET("/rooms/:id/messages", chatHandler.GetMessages)
+		protected.PUT("/rooms/:id/read", chatHandler.MarkRoomAsRead)
 
 		// バディ
 		buddyGroup := protected.Group("/buddy")

@@ -21,7 +21,14 @@ func (r *PostgresRepository) GetRoomsByUserID(ctx context.Context, userID uuid.U
 			rm.room_id AS id,
 			partner.user_id AS partner_id,
 			u.display_name AS partner_name,
-			ro.created_at
+			ro.created_at,
+			(
+				SELECT COUNT(*)
+				FROM messages m
+				WHERE m.room_id = rm.room_id
+				  AND m.sender_id != $1
+				  AND (rm.last_read_message_id IS NULL OR m.id > rm.last_read_message_id)
+			) AS unread_count
 		FROM room_members rm
 		INNER JOIN rooms ro ON ro.id = rm.room_id
 		INNER JOIN room_members partner ON partner.room_id = rm.room_id AND partner.user_id != $1
@@ -37,12 +44,21 @@ func (r *PostgresRepository) GetRoomsByUserID(ctx context.Context, userID uuid.U
 	var rooms []*RoomWithPartner
 	for rows.Next() {
 		rp := &RoomWithPartner{}
-		if err := rows.Scan(&rp.ID, &rp.PartnerID, &rp.PartnerName, &rp.CreatedAt); err != nil {
+		if err := rows.Scan(&rp.ID, &rp.PartnerID, &rp.PartnerName, &rp.CreatedAt, &rp.UnreadCount); err != nil {
 			return nil, err
 		}
 		rooms = append(rooms, rp)
 	}
 	return rooms, rows.Err()
+}
+
+func (r *PostgresRepository) UpdateLastRead(ctx context.Context, roomID, userID uuid.UUID) error {
+	_, err := r.db.ExecContext(ctx, `
+		UPDATE room_members
+		SET last_read_message_id = (SELECT MAX(id) FROM messages WHERE room_id = $1)
+		WHERE room_id = $1 AND user_id = $2
+	`, roomID, userID)
+	return err
 }
 
 func (r *PostgresRepository) GetUserRoomIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {

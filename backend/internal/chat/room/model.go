@@ -14,8 +14,9 @@ type Room struct {
 
 // RoomWithPartner はルーム一覧API用（パートナー情報付き）
 type RoomWithPartner struct {
-	ID            uuid.UUID `db:"id"`
-	PartnerID     uuid.UUID `db:"partner_id"`
-	PartnerName   string    `db:"partner_name"`
-	CreatedAt     time.Time `db:"created_at"`
+	ID          uuid.UUID `db:"id"`
+	PartnerID   uuid.UUID `db:"partner_id"`
+	PartnerName string    `db:"partner_name"`
+	CreatedAt   time.Time `db:"created_at"`
+	UnreadCount int       `db:"unread_count"`
 }
