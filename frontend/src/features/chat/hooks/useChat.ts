@@ -88,6 +88,7 @@ export function useChat(initialRoomId?: string) {
     setChatRooms((prev) =>
       prev.map((r) => (r.id === roomId ? { ...r, unreadCount: 0 } : r)),
     )
+    window.dispatchEvent(new Event('chat:read'))
   }, [])
 
   // WebSocket からのメッセージを受信して state に反映
