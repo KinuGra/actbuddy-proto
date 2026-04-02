@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Message, ChatRoom } from '../types/chat'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080'
@@ -15,6 +15,9 @@ export function useChat(initialRoomId?: string) {
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([])
   const [messages, setMessages] = useState<Record<string, Message[]>>({})
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const activeRoomIdRef = useRef<string | undefined>(undefined)
+  const wsRef = useRef<WebSocket | null>(null)
+  const addMessageRef = useRef<(data: string) => void>(() => {})
 
   // 現在のユーザーIDを取得
   useEffect(() => {
@@ -28,14 +31,18 @@ export function useChat(initialRoomId?: string) {
   const fetchRooms = useCallback(async () => {
     const res = await fetch(`${API_BASE}/api/rooms`, { credentials: 'include' })
     if (!res.ok) return
-    const data: Array<{ id: string; partner: { id: string; display_name: string }; created_at: string }> =
-      await res.json()
+    const data: Array<{
+      id: string
+      partner: { id: string; display_name: string }
+      created_at: string
+      unread_count: number
+    }> = await res.json()
     setChatRooms(
       data.map((r) => ({
         id: r.id,
         participantId: r.partner.id,
         participantName: r.partner.display_name,
-        unreadCount: 0,
+        unreadCount: r.unread_count,
       })),
     )
   }, [])
@@ -72,6 +79,17 @@ export function useChat(initialRoomId?: string) {
     }))
   }, [])
 
+  // 既読更新（addMessage より前に定義）
+  const markRoomAsRead = useCallback(async (roomId: string) => {
+    await fetch(`${API_BASE}/api/rooms/${roomId}/read`, {
+      method: 'PUT',
+      credentials: 'include',
+    })
+    setChatRooms((prev) =>
+      prev.map((r) => (r.id === roomId ? { ...r, unreadCount: 0 } : r)),
+    )
+  }, [])
+
   // WebSocket からのメッセージを受信して state に反映
   const addMessage = useCallback(
     (data: string) => {
@@ -98,27 +116,71 @@ export function useChat(initialRoomId?: string) {
           ...prev,
           [msg.room_id]: [...(prev[msg.room_id] ?? []), newMessage],
         }))
+
+        // currentUserId が未取得の間は判定をスキップ
+        if (currentUserId && msg.sender_id !== currentUserId) {
+          if (msg.room_id === activeRoomIdRef.current) {
+            // アクティブルームの新着はサーバー側の既読状態を更新
+            markRoomAsRead(msg.room_id)
+          } else {
+            // 非アクティブルームは未読数をインクリメント
+            setChatRooms((prev) =>
+              prev.map((r) =>
+                r.id === msg.room_id ? { ...r, unreadCount: r.unreadCount + 1 } : r,
+              ),
+            )
+          }
+        }
       } catch {
         // parse error は無視
       }
     },
-    [],
+    [currentUserId, markRoomAsRead],
   )
+
+  // addMessage の最新版を ref で保持（WebSocket の onmessage から参照）
+  useEffect(() => {
+    addMessageRef.current = addMessage
+  }, [addMessage])
+
+  // WebSocket 接続（チャットページを開いている間は常に接続）
+  useEffect(() => {
+    const token = getSessionToken()
+    const url = `${WS_BASE}/ws${token ? `?token=${token}` : ''}`
+    const ws = new WebSocket(url)
+    wsRef.current = ws
+
+    ws.onopen = () => console.log('WebSocket opened')
+    ws.onmessage = (event) => addMessageRef.current(event.data)
+    ws.onclose = () => console.log('WebSocket disconnected')
+
+    return () => ws.close()
+  }, [])
 
   const getMessages = useCallback(
     (roomId: string) => messages[roomId] ?? [],
     [messages],
   )
 
-  const token = getSessionToken()
-  const wsURL = `${WS_BASE}/ws${token ? `?token=${token}` : ''}`
+  // アクティブルームを設定（未読カウント制御用）
+  const setActiveRoom = useCallback((roomId: string | undefined) => {
+    activeRoomIdRef.current = roomId
+  }, [])
+
+  // メッセージ送信
+  const sendMessage = useCallback((roomId: string, content: string) => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return
+    wsRef.current.send(JSON.stringify({ room_id: roomId, content }))
+  }, [])
 
   return {
     chatRooms,
     currentUserId,
-    wsURL,
     fetchMessages,
     addMessage,
     getMessages,
+    markRoomAsRead,
+    setActiveRoom,
+    sendMessage,
   }
 }
