@@ -19,8 +19,7 @@ interface ChatWindowProps {
   participantName: string
   messages: Message[]
   currentUserId: string | null
-  onReceiveMessage: (data: string) => void
-  wsURL: string
+  onSendMessage: (roomId: string, content: string) => void
 }
 
 export function ChatWindow({
@@ -28,43 +27,19 @@ export function ChatWindow({
   participantName,
   messages,
   currentUserId,
-  onReceiveMessage,
-  wsURL,
+  onSendMessage,
 }: ChatWindowProps) {
   const [inputValue, setInputValue] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const wsRef = useRef<WebSocket | null>(null)
-  const onReceiveMessageRef = useRef(onReceiveMessage)
-
-  useEffect(() => {
-    onReceiveMessageRef.current = onReceiveMessage
-  }, [onReceiveMessage])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  useEffect(() => {
-    const ws = new WebSocket(wsURL)
-    wsRef.current = ws
-
-    ws.onopen = () => console.log('WebSocket opened')
-    ws.onmessage = (event) => onReceiveMessageRef.current(event.data)
-    ws.onclose = () => console.log('WebSocket disconnected')
-
-    return () => ws.close()
-  }, [wsURL])
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!inputValue.trim() || !wsRef.current) return
-
-    wsRef.current.send(
-      JSON.stringify({
-        room_id: roomId,
-        content: inputValue.trim(),
-      }),
-    )
+    if (!inputValue.trim()) return
+    onSendMessage(roomId, inputValue.trim())
     setInputValue('')
   }
 

@@ -13,19 +13,26 @@ function ChatContent() {
   const searchParams = useSearchParams()
   const [selectedRoomId, setSelectedRoomId] = useState<string | undefined>(undefined)
 
-  const { chatRooms, currentUserId, wsURL, fetchMessages, addMessage, getMessages } = useChat()
+  const { chatRooms, currentUserId, fetchMessages, addMessage, getMessages, markRoomAsRead, setActiveRoom, sendMessage } = useChat()
 
   useEffect(() => {
     const roomParam = searchParams.get('room')
     if (roomParam) {
       setSelectedRoomId(roomParam)
       fetchMessages(roomParam)
+      markRoomAsRead(roomParam)
     }
   }, [searchParams])
+
+  // アクティブルームの同期
+  useEffect(() => {
+    setActiveRoom(selectedRoomId)
+  }, [selectedRoomId, setActiveRoom])
 
   const handleSelectRoom = (roomId: string) => {
     setSelectedRoomId(roomId)
     fetchMessages(roomId)
+    markRoomAsRead(roomId)
   }
 
   const selectedRoom = chatRooms.find((r) => r.id === selectedRoomId)
@@ -64,8 +71,7 @@ function ChatContent() {
                 participantName={selectedRoom.participantName}
                 messages={messages}
                 currentUserId={currentUserId}
-                onReceiveMessage={addMessage}
-                wsURL={wsURL}
+                onSendMessage={sendMessage}
               />
             </div>
           ) : (
