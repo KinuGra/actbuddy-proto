@@ -79,6 +79,17 @@ export function useChat(initialRoomId?: string) {
     }))
   }, [])
 
+  // 既読更新（addMessage より前に定義）
+  const markRoomAsRead = useCallback(async (roomId: string) => {
+    await fetch(`${API_BASE}/api/rooms/${roomId}/read`, {
+      method: 'PUT',
+      credentials: 'include',
+    })
+    setChatRooms((prev) =>
+      prev.map((r) => (r.id === roomId ? { ...r, unreadCount: 0 } : r)),
+    )
+  }, [])
+
   // WebSocket からのメッセージを受信して state に反映
   const addMessage = useCallback(
     (data: string) => {
@@ -106,19 +117,25 @@ export function useChat(initialRoomId?: string) {
           [msg.room_id]: [...(prev[msg.room_id] ?? []), newMessage],
         }))
 
-        // 非アクティブルームかつ自分以外の送信なら未読数をインクリメント
-        if (msg.room_id !== activeRoomIdRef.current && msg.sender_id !== currentUserId) {
-          setChatRooms((prev) =>
-            prev.map((r) =>
-              r.id === msg.room_id ? { ...r, unreadCount: r.unreadCount + 1 } : r,
-            ),
-          )
+        // currentUserId が未取得の間は判定をスキップ
+        if (currentUserId && msg.sender_id !== currentUserId) {
+          if (msg.room_id === activeRoomIdRef.current) {
+            // アクティブルームの新着はサーバー側の既読状態を更新
+            markRoomAsRead(msg.room_id)
+          } else {
+            // 非アクティブルームは未読数をインクリメント
+            setChatRooms((prev) =>
+              prev.map((r) =>
+                r.id === msg.room_id ? { ...r, unreadCount: r.unreadCount + 1 } : r,
+              ),
+            )
+          }
         }
       } catch {
         // parse error は無視
       }
     },
-    [currentUserId],
+    [currentUserId, markRoomAsRead],
   )
 
   // addMessage の最新版を ref で保持（WebSocket の onmessage から参照）
@@ -148,17 +165,6 @@ export function useChat(initialRoomId?: string) {
   // アクティブルームを設定（未読カウント制御用）
   const setActiveRoom = useCallback((roomId: string | undefined) => {
     activeRoomIdRef.current = roomId
-  }, [])
-
-  // 既読更新
-  const markRoomAsRead = useCallback(async (roomId: string) => {
-    await fetch(`${API_BASE}/api/rooms/${roomId}/read`, {
-      method: 'PUT',
-      credentials: 'include',
-    })
-    setChatRooms((prev) =>
-      prev.map((r) => (r.id === roomId ? { ...r, unreadCount: 0 } : r)),
-    )
   }, [])
 
   // メッセージ送信
