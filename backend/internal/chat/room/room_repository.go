@@ -13,4 +13,6 @@ type RoomRepository interface {
 	GetUserRoomIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error)
 	// ユーザーがルームメンバーかチェック
 	IsRoomMember(ctx context.Context, roomID, userID uuid.UUID) (bool, error)
+	// 最終既読メッセージIDを更新
+	UpdateLastRead(ctx context.Context, roomID, userID uuid.UUID) error
 }
