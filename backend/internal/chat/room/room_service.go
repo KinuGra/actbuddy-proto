@@ -25,3 +25,7 @@ func (s *RoomService) GetUserRoomIDs(ctx context.Context, userID uuid.UUID) ([]u
 func (s *RoomService) IsRoomMember(ctx context.Context, roomID, userID uuid.UUID) (bool, error) {
 	return s.repo.IsRoomMember(ctx, roomID, userID)
 }
+
+func (s *RoomService) UpdateLastRead(ctx context.Context, roomID, userID uuid.UUID) error {
+	return s.repo.UpdateLastRead(ctx, roomID, userID)
+}

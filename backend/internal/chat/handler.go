@@ -39,9 +39,10 @@ func (h *Handler) GetRooms(c *gin.Context) {
 		DisplayName string `json:"display_name"`
 	}
 	type roomResponse struct {
-		ID        string      `json:"id"`
-		Partner   partnerInfo `json:"partner"`
-		CreatedAt interface{} `json:"created_at"`
+		ID          string      `json:"id"`
+		Partner     partnerInfo `json:"partner"`
+		CreatedAt   interface{} `json:"created_at"`
+		UnreadCount int         `json:"unread_count"`
 	}
 
 	res := make([]roomResponse, 0, len(rooms))
@@ -52,10 +53,39 @@ func (h *Handler) GetRooms(c *gin.Context) {
 				ID:          r.PartnerID.String(),
 				DisplayName: r.PartnerName,
 			},
-			CreatedAt: r.CreatedAt,
+			CreatedAt:   r.CreatedAt,
+			UnreadCount: r.UnreadCount,
 		})
 	}
 	c.JSON(http.StatusOK, res)
+}
+
+// MarkRoomAsRead PUT /api/rooms/:id/read
+func (h *Handler) MarkRoomAsRead(c *gin.Context) {
+	user, ok := auth.GetCurrentUserFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "認証が必要です"})
+		return
+	}
+
+	roomID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "不正なID形式です"})
+		return
+	}
+
+	isMember, err := h.roomSvc.IsRoomMember(c.Request.Context(), roomID, user.ID)
+	if err != nil || !isMember {
+		c.JSON(http.StatusForbidden, gin.H{"error": "アクセス権がありません"})
+		return
+	}
+
+	if err := h.roomSvc.UpdateLastRead(c.Request.Context(), roomID, user.ID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "サーバーエラーが発生しました"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
 // GetMessages GET /api/rooms/:id/messages
