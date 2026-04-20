@@ -62,6 +62,5 @@ type UserResponse struct {
 
 // AuthResponseはログイン・サインアップ時にクライアントに返すレスポンス
 type AuthResponse struct {
-	Token string       `json:"token"`
-	User  UserResponse `json:"user"`
+	User UserResponse `json:"user"`
 }

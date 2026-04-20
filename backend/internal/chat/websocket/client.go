@@ -56,6 +56,8 @@ func (c *Client) readPump() {
 		c.conn.Close()
 	}()
 
+	c.conn.SetReadLimit(4096)
+
 	for {
 		_, msgBytes, err := c.conn.ReadMessage()
 		if err != nil {

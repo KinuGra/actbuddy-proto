@@ -25,6 +25,7 @@ type Repository interface {
 	GetRelationshipByID(ctx context.Context, id uuid.UUID) (*BuddyRelationship, error)
 	EndRelationship(ctx context.Context, id uuid.UUID) error
 	HasExistingRelationship(ctx context.Context, userID1, userID2 uuid.UUID) (bool, error)
+	IsActivePartner(ctx context.Context, userID1, userID2 uuid.UUID) (bool, error)
 	CountActiveRelationships(ctx context.Context, userID uuid.UUID) (int, error)
 
 	// 補助

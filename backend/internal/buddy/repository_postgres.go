@@ -325,6 +325,20 @@ func (r *postgresRepository) HasExistingRelationship(ctx context.Context, userID
 	return exists, err
 }
 
+func (r *postgresRepository) IsActivePartner(ctx context.Context, userID1, userID2 uuid.UUID) (bool, error) {
+	if bytes.Compare(userID1[:], userID2[:]) > 0 {
+		userID1, userID2 = userID2, userID1
+	}
+	var exists bool
+	err := r.db.QueryRowContext(ctx, `
+		SELECT EXISTS(
+			SELECT 1 FROM buddy_relationships
+			WHERE user_id_1 = $1 AND user_id_2 = $2 AND status = 'active'
+		)
+	`, userID1, userID2).Scan(&exists)
+	return exists, err
+}
+
 func (r *postgresRepository) CountActiveRelationships(ctx context.Context, userID uuid.UUID) (int, error) {
 	var count int
 	err := r.db.QueryRowContext(ctx, `

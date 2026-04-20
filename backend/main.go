@@ -45,12 +45,12 @@ func main() {
 	authRepo := auth.NewPostgresRepository(sqlxDB)
 	authService := auth.NewService(authRepo)
 	authHandler := auth.NewHandler(authService)
-	taskRepo := task.NewPostgresRepository(db)
-	taskSvc := task.NewService(taskRepo)
-	taskHandler := task.NewHandler(taskSvc)
-
 	buddyRepo := buddy.NewPostgresRepository(db)
 	buddySvc := buddy.NewService(buddyRepo)
+
+	taskRepo := task.NewPostgresRepository(db)
+	taskSvc := task.NewService(taskRepo, buddySvc)
+	taskHandler := task.NewHandler(taskSvc)
 	buddyHandler := buddy.NewHandler(buddySvc)
 	buddy.StartMatchingJob(buddySvc)
 
@@ -74,6 +74,16 @@ func main() {
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
 	}))
+
+	r.Use(func(c *gin.Context) {
+		c.Header("X-Content-Type-Options", "nosniff")
+		c.Header("X-Frame-Options", "DENY")
+		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
+		if os.Getenv("GIN_MODE") == "release" {
+			c.Header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+		}
+		c.Next()
+	})
 
 	r.GET("/health", healthHandler)
 
@@ -128,7 +138,9 @@ func main() {
 		websocket.ServeWs(hub, authService, roomSvc, msgSvc, c.Writer, c.Request)
 	})
 
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	if os.Getenv("GIN_MODE") != "release" {
+		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	}
 
 	port := os.Getenv("PORT")
 	if port == "" {
