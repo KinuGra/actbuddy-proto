@@ -22,6 +22,7 @@ func (h *Handler) Signup(c *gin.Context) {
 	var req SignupRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "リクエストが不正です"})
+		return
 	}
 
 	// 2. サービス層を呼ぶ
@@ -38,8 +39,8 @@ func (h *Handler) Signup(c *gin.Context) {
 	// 3. Cookieをセット
 	setSessionCookie(c, token)
 
-	// 4. レスポンスを返す（tokenをbodyにも含める）
-	c.JSON(http.StatusCreated, AuthResponse{Token: token, User: *user})
+	// 4. レスポンスを返す
+	c.JSON(http.StatusCreated, AuthResponse{User: *user})
 }
 
 // Login POST /api/auth/login
@@ -61,7 +62,7 @@ func (h *Handler) Login(c *gin.Context) {
 	}
 
 	setSessionCookie(c, token)
-	c.JSON(http.StatusOK, AuthResponse{Token: token, User: *user})
+	c.JSON(http.StatusOK, AuthResponse{User: *user})
 }
 
 // Logout POST /api/auth/logout
@@ -149,13 +150,11 @@ func setSessionCookie(c *gin.Context, token string) {
 
 // clearSessionCookie はセッションCookieを削除する
 func clearSessionCookie(c *gin.Context) {
-	c.SetCookie(
-		SessionCookieName,
-		"",
-		-1,
-		"/",
-		"",
-		false,
-		true,
-	)
+	secure := os.Getenv("GIN_MODE") == "release"
+	if secure {
+		c.SetSameSite(http.SameSiteNoneMode)
+	} else {
+		c.SetSameSite(http.SameSiteLaxMode)
+	}
+	c.SetCookie(SessionCookieName, "", -1, "/", "", secure, true)
 }

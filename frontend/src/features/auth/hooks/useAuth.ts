@@ -7,13 +7,7 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080'
 
 type AuthResponse = {
-  token: string
   user: UserResponse
-}
-
-function setSessionCookie(token: string) {
-  document.cookie = `session_token=${token}; path=/; max-age=86400`
-  sessionStorage.setItem('session_token', token)
 }
 
 export function useAuth() {
@@ -35,8 +29,7 @@ export function useAuth() {
         setError(body.error ?? 'ユーザー登録に失敗しました')
         return null
       }
-      const { token, user } = (await res.json()) as AuthResponse
-      setSessionCookie(token)
+      const { user } = (await res.json()) as AuthResponse
       return user
     } catch {
       setError('ネットワークエラーが発生しました')
@@ -61,8 +54,7 @@ export function useAuth() {
         setError(body.error ?? 'ログインに失敗しました')
         return null
       }
-      const { token, user } = (await res.json()) as AuthResponse
-      setSessionCookie(token)
+      const { user } = (await res.json()) as AuthResponse
       return user
     } catch {
       setError('ネットワークエラーが発生しました')

@@ -8,14 +8,15 @@ import (
 )
 
 var ErrNotFound = errors.New("action item not found")
+var ErrForbidden = errors.New("forbidden")
 
 type Service interface {
 	Create(ctx context.Context, req *CreateRequest) (*ActionItem, error)
-	GetByUUID(ctx context.Context, id uuid.UUID) (*ActionItem, error)
+	GetByUUID(ctx context.Context, id uuid.UUID, requesterID uuid.UUID) (*ActionItem, error)
 	ListByUserID(ctx context.Context, userID uuid.UUID) ([]*ActionItem, error)
 	ListForUser(ctx context.Context, requesterID uuid.UUID, targetUserID uuid.UUID) ([]*ActionItem, error)
-	Update(ctx context.Context, id uuid.UUID, req *UpdateRequest) (*ActionItem, error)
-	Delete(ctx context.Context, id uuid.UUID) error
+	Update(ctx context.Context, id uuid.UUID, req *UpdateRequest, requesterID uuid.UUID) (*ActionItem, error)
+	Delete(ctx context.Context, id uuid.UUID, requesterID uuid.UUID) error
 }
 
 type service struct {
@@ -43,8 +44,15 @@ func (s *service) Create(ctx context.Context, req *CreateRequest) (*ActionItem, 
 	return s.repo.Create(ctx, item)
 }
 
-func (s *service) GetByUUID(ctx context.Context, id uuid.UUID) (*ActionItem, error) {
-	return s.repo.FindByUUID(ctx, id)
+func (s *service) GetByUUID(ctx context.Context, id uuid.UUID, requesterID uuid.UUID) (*ActionItem, error) {
+	item, err := s.repo.FindByUUID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if item.UserID != requesterID {
+		return nil, ErrForbidden
+	}
+	return item, nil
 }
 
 func (s *service) ListByUserID(ctx context.Context, userID uuid.UUID) ([]*ActionItem, error) {
@@ -55,10 +63,13 @@ func (s *service) ListForUser(ctx context.Context, requesterID uuid.UUID, target
 	return s.repo.FindByUserIDAsPartner(ctx, requesterID, targetUserID)
 }
 
-func (s *service) Update(ctx context.Context, id uuid.UUID, req *UpdateRequest) (*ActionItem, error) {
+func (s *service) Update(ctx context.Context, id uuid.UUID, req *UpdateRequest, requesterID uuid.UUID) (*ActionItem, error) {
 	item, err := s.repo.FindByUUID(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+	if item.UserID != requesterID {
+		return nil, ErrForbidden
 	}
 
 	if req.Title != nil {
@@ -83,6 +94,13 @@ func (s *service) Update(ctx context.Context, id uuid.UUID, req *UpdateRequest) 
 	return s.repo.Update(ctx, item)
 }
 
-func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
+func (s *service) Delete(ctx context.Context, id uuid.UUID, requesterID uuid.UUID) error {
+	item, err := s.repo.FindByUUID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if item.UserID != requesterID {
+		return ErrForbidden
+	}
 	return s.repo.Delete(ctx, id)
 }

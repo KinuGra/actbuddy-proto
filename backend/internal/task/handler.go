@@ -106,18 +106,29 @@ func (h *Handler) List(c *gin.Context) {
 // @Param        uuid  path      string  true  "アクションアイテムUUID"
 // @Success      200   {object}  map[string]ActionItemResponse
 // @Failure      400   {object}  map[string]string
+// @Failure      403   {object}  map[string]string
 // @Failure      404   {object}  map[string]string
 // @Failure      500   {object}  map[string]string
 // @Router       /api/v1/action-items/{uuid} [get]
 func (h *Handler) Get(c *gin.Context) {
+	user, ok := auth.GetCurrentUserFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
 	id, err := uuid.Parse(c.Param("uuid"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid"})
 		return
 	}
 
-	item, err := h.svc.GetByUUID(c.Request.Context(), id)
+	item, err := h.svc.GetByUUID(c.Request.Context(), id, user.ID)
 	if err != nil {
+		if errors.Is(err, ErrForbidden) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+			return
+		}
 		if errors.Is(err, ErrNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
 			return
@@ -139,10 +150,17 @@ func (h *Handler) Get(c *gin.Context) {
 // @Param        body  body      UpdateRequest  true  "更新内容"
 // @Success      200   {object}  map[string]ActionItemResponse
 // @Failure      400   {object}  map[string]string
+// @Failure      403   {object}  map[string]string
 // @Failure      404   {object}  map[string]string
 // @Failure      500   {object}  map[string]string
 // @Router       /api/v1/action-items/{uuid} [put]
 func (h *Handler) Update(c *gin.Context) {
+	user, ok := auth.GetCurrentUserFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
 	id, err := uuid.Parse(c.Param("uuid"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid"})
@@ -155,8 +173,12 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	item, err := h.svc.Update(c.Request.Context(), id, &req)
+	item, err := h.svc.Update(c.Request.Context(), id, &req, user.ID)
 	if err != nil {
+		if errors.Is(err, ErrForbidden) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+			return
+		}
 		if errors.Is(err, ErrNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
 			return
@@ -176,17 +198,28 @@ func (h *Handler) Update(c *gin.Context) {
 // @Param        uuid  path  string  true  "アクションアイテムUUID"
 // @Success      204
 // @Failure      400  {object}  map[string]string
+// @Failure      403  {object}  map[string]string
 // @Failure      404  {object}  map[string]string
 // @Failure      500  {object}  map[string]string
 // @Router       /api/v1/action-items/{uuid} [delete]
 func (h *Handler) Delete(c *gin.Context) {
+	user, ok := auth.GetCurrentUserFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
 	id, err := uuid.Parse(c.Param("uuid"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid"})
 		return
 	}
 
-	if err := h.svc.Delete(c.Request.Context(), id); err != nil {
+	if err := h.svc.Delete(c.Request.Context(), id, user.ID); err != nil {
+		if errors.Is(err, ErrForbidden) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+			return
+		}
 		if errors.Is(err, ErrNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
 			return

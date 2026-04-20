@@ -75,6 +75,16 @@ func main() {
 		AllowCredentials: true,
 	}))
 
+	r.Use(func(c *gin.Context) {
+		c.Header("X-Content-Type-Options", "nosniff")
+		c.Header("X-Frame-Options", "DENY")
+		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
+		if os.Getenv("GIN_MODE") == "release" {
+			c.Header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+		}
+		c.Next()
+	})
+
 	r.GET("/health", healthHandler)
 
 	// 認証不要
@@ -128,7 +138,9 @@ func main() {
 		websocket.ServeWs(hub, authService, roomSvc, msgSvc, c.Writer, c.Request)
 	})
 
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	if os.Getenv("GIN_MODE") != "release" {
+		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	}
 
 	port := os.Getenv("PORT")
 	if port == "" {
