@@ -45,12 +45,12 @@ func main() {
 	authRepo := auth.NewPostgresRepository(sqlxDB)
 	authService := auth.NewService(authRepo)
 	authHandler := auth.NewHandler(authService)
-	taskRepo := task.NewPostgresRepository(db)
-	taskSvc := task.NewService(taskRepo)
-	taskHandler := task.NewHandler(taskSvc)
-
 	buddyRepo := buddy.NewPostgresRepository(db)
 	buddySvc := buddy.NewService(buddyRepo)
+
+	taskRepo := task.NewPostgresRepository(db)
+	taskSvc := task.NewService(taskRepo, buddySvc)
+	taskHandler := task.NewHandler(taskSvc)
 	buddyHandler := buddy.NewHandler(buddySvc)
 	buddy.StartMatchingJob(buddySvc)
 

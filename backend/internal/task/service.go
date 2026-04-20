@@ -10,6 +10,11 @@ import (
 var ErrNotFound = errors.New("action item not found")
 var ErrForbidden = errors.New("forbidden")
 
+// PartnerChecker はバディ関係を確認するための最小インターフェース
+type PartnerChecker interface {
+	IsActivePartner(ctx context.Context, userID1, userID2 uuid.UUID) (bool, error)
+}
+
 type Service interface {
 	Create(ctx context.Context, req *CreateRequest) (*ActionItem, error)
 	GetByUUID(ctx context.Context, id uuid.UUID, requesterID uuid.UUID) (*ActionItem, error)
@@ -20,11 +25,12 @@ type Service interface {
 }
 
 type service struct {
-	repo Repository
+	repo    Repository
+	partners PartnerChecker
 }
 
-func NewService(repo Repository) Service {
-	return &service{repo: repo}
+func NewService(repo Repository, partners PartnerChecker) Service {
+	return &service{repo: repo, partners: partners}
 }
 
 func (s *service) Create(ctx context.Context, req *CreateRequest) (*ActionItem, error) {
@@ -49,7 +55,14 @@ func (s *service) GetByUUID(ctx context.Context, id uuid.UUID, requesterID uuid.
 	if err != nil {
 		return nil, err
 	}
-	if item.UserID != requesterID {
+	if item.UserID == requesterID {
+		return item, nil
+	}
+	isPartner, err := s.partners.IsActivePartner(ctx, item.UserID, requesterID)
+	if err != nil {
+		return nil, err
+	}
+	if !isPartner {
 		return nil, ErrForbidden
 	}
 	return item, nil

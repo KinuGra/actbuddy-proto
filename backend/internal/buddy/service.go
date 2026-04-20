@@ -129,6 +129,10 @@ func (s *Service) EndRelationship(ctx context.Context, userID, relationshipID uu
 	return s.repo.EndRelationship(ctx, relationshipID)
 }
 
+func (s *Service) IsActivePartner(ctx context.Context, userID1, userID2 uuid.UUID) (bool, error) {
+	return s.repo.IsActivePartner(ctx, userID1, userID2)
+}
+
 // --- バディ上限 ---
 
 func (s *Service) GetBuddyCapacity(ctx context.Context, userID uuid.UUID) (*BuddyCapacityResponse, error) {
