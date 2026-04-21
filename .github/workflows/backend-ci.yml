@@ -38,7 +38,7 @@ jobs:
           cache-dependency-path: backend/go.sum
 
       - name: Run gofmt
-        run: gofmt -w ./...
+        run: gofmt -w .
 
       - name: Auto-commit formatting changes
         if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
