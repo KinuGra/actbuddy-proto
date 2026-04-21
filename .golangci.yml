@@ -1,0 +1,26 @@
+run:
+  timeout: 5m
+  go: '1.25'
+
+linters:
+  enable:
+    - govet
+    - gofmt
+    - errcheck
+    - staticcheck
+
+linters-settings:
+  gofmt:
+    simplify: true
+  errcheck:
+    check-type-assertions: true
+  staticcheck:
+    checks:
+      - "all"
+      - "-ST1000"
+
+issues:
+  exclude-rules:
+    - path: "_test\\.go"
+      linters:
+        - errcheck
