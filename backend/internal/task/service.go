@@ -25,7 +25,7 @@ type Service interface {
 }
 
 type service struct {
-	repo    Repository
+	repo     Repository
 	partners PartnerChecker
 }
 
