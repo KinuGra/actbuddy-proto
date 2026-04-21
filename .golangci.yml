@@ -8,6 +8,7 @@ linters:
     - gofmt
     - errcheck
     - staticcheck
+    - gosec
 
 linters-settings:
   gofmt:
