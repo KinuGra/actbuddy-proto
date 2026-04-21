@@ -50,6 +50,12 @@ func NewClient(userID uuid.UUID, displayName string, roomIDs []uuid.UUID, hub *H
 	}
 }
 
+const (
+	readTimeout  = 60 * time.Second
+	pongTimeout  = 10 * time.Second
+	pingInterval = (readTimeout * 9) / 10
+)
+
 func (c *Client) readPump() {
 	defer func() {
 		c.hub.unregister <- c
@@ -57,6 +63,11 @@ func (c *Client) readPump() {
 	}()
 
 	c.conn.SetReadLimit(4096)
+	c.conn.SetReadDeadline(time.Now().Add(readTimeout))
+	c.conn.SetPongHandler(func(string) error {
+		c.conn.SetReadDeadline(time.Now().Add(readTimeout))
+		return nil
+	})
 
 	for {
 		_, msgBytes, err := c.conn.ReadMessage()
@@ -122,9 +133,25 @@ func (c *Client) readPump() {
 }
 
 func (c *Client) writePump() {
-	for msg := range c.send {
-		if err := c.conn.WriteMessage(websocket.TextMessage, msg); err != nil {
-			log.Println("Write error:", err)
+	ticker := time.NewTicker(pingInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case msg, ok := <-c.send:
+			if !ok {
+				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				return
+			}
+			if err := c.conn.WriteMessage(websocket.TextMessage, msg); err != nil {
+				log.Println("Write error:", err)
+				return
+			}
+		case <-ticker.C:
+			c.conn.SetWriteDeadline(time.Now().Add(pongTimeout))
+			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return
+			}
 		}
 	}
 }
