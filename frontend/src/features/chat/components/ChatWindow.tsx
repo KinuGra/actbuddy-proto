@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useRef, useEffect } from 'react'
 import { Message } from '../types/chat'
 import {
@@ -13,43 +15,42 @@ import { Send } from 'lucide-react'
 import { format } from 'date-fns'
 
 interface ChatWindowProps {
+  roomId: string
   participantName: string
   messages: Message[]
-  onSendMessage: (content: string) => void
+  currentUserId: string | null
+  onSendMessage: (roomId: string, content: string) => void
 }
 
 export function ChatWindow({
+  roomId,
   participantName,
   messages,
+  currentUserId,
   onSendMessage,
 }: ChatWindowProps) {
   const [inputValue, setInputValue] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
-
   useEffect(() => {
-    scrollToBottom()
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (inputValue.trim()) {
-      onSendMessage(inputValue)
-      setInputValue('')
-    }
+    if (!inputValue.trim()) return
+    onSendMessage(roomId, inputValue.trim())
+    setInputValue('')
   }
 
   return (
-    <Card className="flex flex-col h-[600px]">
+    <Card className="flex flex-col h-[calc(100vh-140px)] md:h-[600px]">
       <CardHeader className="border-b">
         <CardTitle>{participantName}</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => {
-          const isOwn = message.senderId === 'current'
+          const isOwn = message.senderId === currentUserId
           return (
             <div
               key={message.id}
@@ -60,6 +61,9 @@ export function ChatWindow({
                   isOwn ? 'bg-primary text-primary-foreground' : 'bg-muted'
                 }`}
               >
+                {!isOwn && (
+                  <p className="text-xs font-semibold mb-1">{message.senderName}</p>
+                )}
                 <p className="text-sm break-words">{message.content}</p>
                 <span
                   className={`text-xs mt-1 block ${isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}

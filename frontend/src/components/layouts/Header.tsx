@@ -1,199 +1,246 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
-  Users,
-  Calendar,
-  Bell,
-  Mail,
-  LogOut,
-  Settings,
-  UserCircle,
-  Menu,
-  X,
-} from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
-import { currentUser } from '@/features/users/mocks/mockUsers'
-import { mockChatRooms } from '@/features/chat/mocks/mockMessages'
+	Users,
+	Calendar,
+	Bell,
+	Mail,
+	LogOut,
+	Settings,
+	UserCircle,
+	Menu,
+	X,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
+import { useRouter, usePathname } from "next/navigation";
 
 interface NavItem {
-  href: string
-  label: string
-  icon: LucideIcon
+	href: string;
+	label: string;
+	icon: LucideIcon;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  {
-    href: '/calendar',
-    label: 'カレンダー',
-    icon: Calendar,
-  },
-  {
-    href: '/buddies',
-    label: 'バディ',
-    icon: UserCircle,
-  },
-  {
-    href: '/matching',
-    label: 'マッチング',
-    icon: Users,
-  },
-]
+	{ href: "/calendar", label: "カレンダー", icon: Calendar },
+	{ href: "/buddies", label: "バディ", icon: UserCircle },
+	{ href: "/matching", label: "マッチング", icon: Users },
+];
 
-const MOCK_NOTIFICATION_COUNT = 3
+const MOCK_NOTIFICATION_COUNT = 0;
+
+const API_BASE_URL =
+	process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
 
 export function Header() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+	const [mounted, setMounted] = useState(false);
+	const [totalUnread, setTotalUnread] = useState(0);
+	const router = useRouter();
+	const pathname = usePathname();
 
-  // 未読メッセージ合計を計算
-  const totalUnreadMessages = mockChatRooms.reduce(
-    (sum, room) => sum + room.unreadCount,
-    0
-  )
+	const { user: currentUser } = useCurrentUser();
 
-  return (
-    <>
-      {/* Mobile Menu Overlay */}
-      {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 z-10 bg-black/50 md:hidden"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
+	useEffect(() => {
+		setMounted(true);
+	}, []);
 
-      <header className="border-b bg-background relative z-20">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <Users className="w-6 h-6 text-primary-foreground" />
-              </div>
-              <span className="text-xl font-bold">ActBuddy</span>
-            </Link>
+	useEffect(() => {
+		if (!currentUser) {
+			setTotalUnread(0);
+			return;
+		}
 
-            {/* Desktop Navigation */}
-            <nav className="hidden md:block">
-              <ul className="flex gap-2">
-                {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
-                  <li key={href}>
-                    <Button variant="ghost" asChild>
-                      <Link href={href}>
-                        <Icon className="w-4 h-4 mr-2" />
-                        {label}
-                      </Link>
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            </nav>
+		const fetchUnread = () => {
+			fetch(`${API_BASE_URL}/api/rooms`, { credentials: "include" })
+				.then((res) => (res.ok ? res.json() : []))
+				.then((data: Array<{ unread_count: number }>) => {
+					setTotalUnread(
+						data.reduce((sum, r) => sum + (r.unread_count ?? 0), 0),
+					);
+				})
+				.catch(() => {});
+		};
+		fetchUnread();
+		const interval = setInterval(fetchUnread, 30000);
+		window.addEventListener("chat:read", fetchUnread);
+		window.addEventListener("chat:unread", fetchUnread);
+		return () => {
+			clearInterval(interval);
+			window.removeEventListener("chat:read", fetchUnread);
+			window.removeEventListener("chat:unread", fetchUnread);
+		};
+	}, [pathname, currentUser]);
 
-            {/* Right side UI area */}
-            <div className="flex items-center gap-2 md:gap-4">
-              {/* Notification Bell */}
-              <div className="relative inline-flex">
-                <button className="p-2 hover:bg-accent rounded-lg transition-colors flex items-center justify-center">
-                  <Bell className="w-5 h-5" />
-                </button>
-                {MOCK_NOTIFICATION_COUNT > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center leading-none font-bold">
-                    {MOCK_NOTIFICATION_COUNT > 9
-                      ? '9+'
-                      : MOCK_NOTIFICATION_COUNT}
-                  </span>
-                )}
-              </div>
+	const handleLogout = async () => {
+		await fetch(`${API_BASE_URL}/api/auth/logout`, {
+			method: "POST",
+			credentials: "include",
+		});
+		document.cookie = "session_token=; path=/; max-age=0";
+		sessionStorage.removeItem("session_token");
+		router.push("/login");
+	};
 
-              {/* Message Mail */}
-              <div className="relative inline-flex">
-                <Link
-                  href="/chat"
-                  className="p-2 hover:bg-accent rounded-lg transition-colors flex items-center justify-center"
-                >
-                  <Mail className="w-5 h-5" />
-                </Link>
-                {totalUnreadMessages > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center leading-none font-bold">
-                    {totalUnreadMessages > 9 ? '9+' : totalUnreadMessages}
-                  </span>
-                )}
-              </div>
+	return (
+		<>
+			{isMobileMenuOpen && (
+				<div
+					className="fixed inset-0 z-10 bg-black/30 backdrop-blur-sm md:hidden"
+					onClick={() => setIsMobileMenuOpen(false)}
+				/>
+			)}
 
-              {/* User Avatar Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-bold hover:opacity-80 transition-opacity">
-                    {currentUser.name.charAt(0)}
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>{currentUser.name}</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <UserCircle className="w-4 h-4 mr-2" />
-                    プロフィール
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Settings className="w-4 h-4 mr-2" />
-                    設定
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-red-600">
-                    <LogOut className="w-4 h-4 mr-2" />
-                    ログアウト
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+			<header className="sticky top-0 z-20 h-14 bg-background/80 backdrop-blur-xl border-b border-border/50">
+				<div className="max-w-6xl mx-auto px-4 h-full flex items-center justify-between">
+					{/* Logo */}
+					<Link href="/dashboard" className="flex items-center gap-2 shrink-0">
+						<div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center shadow-sm">
+							<Users className="w-4 h-4 text-primary-foreground" />
+						</div>
+						<span className="font-semibold text-sm tracking-tight">
+							ActBuddy
+						</span>
+					</Link>
 
-              {/* Mobile Menu Button */}
-              <button
-                className="md:hidden p-2 hover:bg-accent rounded-lg transition-colors"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              >
-                {isMobileMenuOpen ? (
-                  <X className="w-5 h-5" />
-                ) : (
-                  <Menu className="w-5 h-5" />
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
+					{/* Desktop Nav */}
+					<nav className="hidden md:flex items-center gap-0.5">
+						{NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+							const active = pathname.startsWith(href);
+							return (
+								<Link
+									key={href}
+									href={href}
+									className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+										active
+											? "bg-primary/10 text-primary font-medium"
+											: "text-muted-foreground hover:text-foreground hover:bg-accent"
+									}`}
+								>
+									<Icon className="w-3.5 h-3.5" />
+									{label}
+								</Link>
+							);
+						})}
+					</nav>
 
-        {/* Mobile Navigation Menu */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden border-t bg-background">
-            <nav className="container mx-auto px-4 py-2">
-              <ul className="flex flex-col gap-1">
-                {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
-                  <li key={href}>
-                    <Button
-                      variant="ghost"
-                      asChild
-                      className="w-full justify-start"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      <Link href={href}>
-                        <Icon className="w-4 h-4 mr-2" />
-                        {label}
-                      </Link>
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          </div>
-        )}
-      </header>
-    </>
-  )
+					{/* Right */}
+					<div className="flex items-center gap-1">
+						{/* Notifications */}
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<button className="relative p-2 rounded-lg hover:bg-accent transition-colors">
+									<Bell className="w-4 h-4" />
+									{MOCK_NOTIFICATION_COUNT > 0 && (
+										<span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+									)}
+								</button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end" className="w-56">
+								<DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+									{MOCK_NOTIFICATION_COUNT === 0
+										? "通知はありません"
+										: `${MOCK_NOTIFICATION_COUNT}件の通知`}
+								</DropdownMenuLabel>
+							</DropdownMenuContent>
+						</DropdownMenu>
+
+						{/* Chat */}
+						<Link
+							href="/chat"
+							className="relative p-2 rounded-lg hover:bg-accent transition-colors"
+						>
+							<Mail className="w-4 h-4" />
+							{totalUnread > 0 && (
+								<span className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-red-400 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
+									{totalUnread > 99 ? "99+" : totalUnread}
+								</span>
+							)}
+						</Link>
+
+						{/* User */}
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<button className="w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center text-xs font-semibold hover:bg-primary/25 transition-colors ml-1">
+									{mounted ? (currentUser?.display_name?.[0] ?? "?") : "?"}
+								</button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end" className="w-44">
+								<DropdownMenuLabel className="text-xs font-normal text-muted-foreground truncate">
+									{mounted ? (currentUser?.display_name ?? "") : ""}
+								</DropdownMenuLabel>
+								<DropdownMenuSeparator />
+								<DropdownMenuItem asChild>
+									<Link
+										href="/settings"
+										className="flex items-center gap-2 cursor-pointer"
+									>
+										<Settings className="w-3.5 h-3.5" />
+										設定
+									</Link>
+								</DropdownMenuItem>
+								<DropdownMenuSeparator />
+								<DropdownMenuItem
+									className="text-destructive focus:text-destructive gap-2"
+									onClick={handleLogout}
+								>
+									<LogOut className="w-3.5 h-3.5" />
+									ログアウト
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+
+						{/* Mobile hamburger */}
+						<button
+							className="md:hidden p-2 rounded-lg hover:bg-accent transition-colors ml-1"
+							onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+						>
+							{isMobileMenuOpen ? (
+								<X className="w-4 h-4" />
+							) : (
+								<Menu className="w-4 h-4" />
+							)}
+						</button>
+					</div>
+				</div>
+
+				{/* Mobile menu */}
+				{isMobileMenuOpen && (
+					<div className="md:hidden absolute top-14 left-0 right-0 bg-card/95 backdrop-blur-xl border-b border-border/50 shadow-lg">
+						<nav className="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-1">
+							{NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+								const active = pathname.startsWith(href);
+								return (
+									<Link
+										key={href}
+										href={href}
+										className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+											active
+												? "bg-primary/10 text-primary font-medium"
+												: "text-muted-foreground hover:text-foreground hover:bg-accent"
+										}`}
+										onClick={() => setIsMobileMenuOpen(false)}
+									>
+										<Icon className="w-4 h-4" />
+										{label}
+									</Link>
+								);
+							})}
+						</nav>
+					</div>
+				)}
+			</header>
+		</>
+	);
 }
