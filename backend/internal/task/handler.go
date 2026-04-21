@@ -78,7 +78,7 @@ func (h *Handler) List(c *gin.Context) {
 	if targetParam != "" {
 		targetID, parseErr := uuid.Parse(targetParam)
 		if parseErr != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid target_user_id"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "target_user_idが不正です"})
 			return
 		}
 		items, err = h.svc.ListForUser(c.Request.Context(), user.ID, targetID)
@@ -119,18 +119,18 @@ func (h *Handler) Get(c *gin.Context) {
 
 	id, err := uuid.Parse(c.Param("uuid"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "不正なUUID形式です"})
 		return
 	}
 
 	item, err := h.svc.GetByUUID(c.Request.Context(), id, user.ID)
 	if err != nil {
 		if errors.Is(err, ErrForbidden) {
-			c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+			c.JSON(http.StatusForbidden, gin.H{"error": "アクセスが拒否されました"})
 			return
 		}
 		if errors.Is(err, ErrNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "アクションアイテムが見つかりません"})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -163,7 +163,7 @@ func (h *Handler) Update(c *gin.Context) {
 
 	id, err := uuid.Parse(c.Param("uuid"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "不正なUUID形式です"})
 		return
 	}
 
@@ -176,11 +176,11 @@ func (h *Handler) Update(c *gin.Context) {
 	item, err := h.svc.Update(c.Request.Context(), id, &req, user.ID)
 	if err != nil {
 		if errors.Is(err, ErrForbidden) {
-			c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+			c.JSON(http.StatusForbidden, gin.H{"error": "アクセスが拒否されました"})
 			return
 		}
 		if errors.Is(err, ErrNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "アクションアイテムが見つかりません"})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -211,17 +211,17 @@ func (h *Handler) Delete(c *gin.Context) {
 
 	id, err := uuid.Parse(c.Param("uuid"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid uuid"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "不正なUUID形式です"})
 		return
 	}
 
 	if err := h.svc.Delete(c.Request.Context(), id, user.ID); err != nil {
 		if errors.Is(err, ErrForbidden) {
-			c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+			c.JSON(http.StatusForbidden, gin.H{"error": "アクセスが拒否されました"})
 			return
 		}
 		if errors.Is(err, ErrNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "アクションアイテムが見つかりません"})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

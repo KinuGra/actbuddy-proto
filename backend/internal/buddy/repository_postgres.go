@@ -333,7 +333,7 @@ func (r *postgresRepository) IsActivePartner(ctx context.Context, userID1, userI
 	err := r.db.QueryRowContext(ctx, `
 		SELECT EXISTS(
 			SELECT 1 FROM buddy_relationships
-			WHERE user_id_1 = $1 AND user_id_2 = $2 AND status = 'active'
+			WHERE user_id_1 = $1 AND user_id_2 = $2 AND status = 'active' AND ends_at > NOW()
 		)
 	`, userID1, userID2).Scan(&exists)
 	return exists, err
