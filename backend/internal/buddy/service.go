@@ -8,10 +8,10 @@ import (
 )
 
 var (
-	ErrAlreadyInQueue      = errors.New("already in matching queue")
-	ErrProfileRequired     = errors.New("buddy profile is required to join the queue")
-	ErrBuddyCapacityFull   = errors.New("buddy capacity is full")
-	ErrRelationshipActive  = errors.New("relationship is still active")
+	ErrAlreadyInQueue        = errors.New("already in matching queue")
+	ErrProfileRequired       = errors.New("buddy profile is required to join the queue")
+	ErrBuddyCapacityFull     = errors.New("buddy capacity is full")
+	ErrRelationshipActive    = errors.New("relationship is still active")
 	ErrNotRelationshipMember = errors.New("not a member of this relationship")
 )
 
@@ -127,6 +127,10 @@ func (s *Service) EndRelationship(ctx context.Context, userID, relationshipID uu
 		return ErrNotRelationshipMember
 	}
 	return s.repo.EndRelationship(ctx, relationshipID)
+}
+
+func (s *Service) IsActivePartner(ctx context.Context, userID1, userID2 uuid.UUID) (bool, error) {
+	return s.repo.IsActivePartner(ctx, userID1, userID2)
 }
 
 // --- バディ上限 ---

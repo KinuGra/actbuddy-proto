@@ -110,7 +110,8 @@ func (s *Service) Login(ctx context.Context, req LoginRequest) (*UserResponse, s
 	// 4. レスポンスを返す
 	return toUserResponse(user), token, nil
 }
-	// ログアウト
+
+// ログアウト
 func (s *Service) Logout(ctx context.Context, token string) error {
 	return s.repo.DeleteSessionByToken(ctx, token)
 }

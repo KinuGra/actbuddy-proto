@@ -6,11 +6,6 @@ import { Message, ChatRoom } from '../types/chat'
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080'
 const WS_BASE = API_BASE.replace(/^http/, 'ws')
 
-function getSessionToken(): string | null {
-  if (typeof window === 'undefined') return null
-  return sessionStorage.getItem('session_token')
-}
-
 export function useChat(initialRoomId?: string) {
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([])
   const [messages, setMessages] = useState<Record<string, Message[]>>({})
@@ -147,9 +142,7 @@ export function useChat(initialRoomId?: string) {
 
   // WebSocket 接続（チャットページを開いている間は常に接続）
   useEffect(() => {
-    const token = getSessionToken()
-    const url = `${WS_BASE}/ws${token ? `?token=${token}` : ''}`
-    const ws = new WebSocket(url)
+    const ws = new WebSocket(`${WS_BASE}/ws`)
     wsRef.current = ws
 
     ws.onopen = () => console.log('WebSocket opened')
